@@ -14,16 +14,16 @@ rabbitmq = RabbitMQ(namespace=namespace.metadata.name)
 redis = Redis(namespace=namespace.metadata.name)
 deployment = List(
     items=[
-        namespace.model_dump(by_alias=True),
-        postgres.serviceaccount.model_dump(by_alias=True),
-        postgres.service.model_dump(by_alias=True),
-        postgres.deployment.model_dump(by_alias=True),
-        rabbitmq.serviceaccount.model_dump(by_alias=True),
-        rabbitmq.service.model_dump(by_alias=True),
-        rabbitmq.deployment.model_dump(by_alias=True),
-        redis.serviceaccount.model_dump(by_alias=True),
-        redis.service.model_dump(by_alias=True),
-        redis.deployment.model_dump(by_alias=True),
+        namespace,
+        postgres.serviceaccount,
+        postgres.service,
+        postgres.deployment,
+        rabbitmq.serviceaccount,
+        rabbitmq.service,
+        rabbitmq.deployment,
+        redis.serviceaccount,
+        redis.service,
+        redis.deployment,
     ],
 )
 config.load_config()
