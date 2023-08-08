@@ -1,6 +1,7 @@
 """Base Models for Kubernetes Deployments."""
 
-from starbug.kube.common import KubernetesModel, Labels
+from starbug.kube.common import KubernetesModel, Labels, Metadata
+from starbug.kube.pod import Container, EnvironmentVariable, ImagePullSecrets, Tolerations
 
 
 class DeploymentSelector(KubernetesModel):
@@ -8,59 +9,20 @@ class DeploymentSelector(KubernetesModel):
 
     match_labels: Labels
 
-
-class DeploymentTemplateMetadata(KubernetesModel):
-    """Defines Template Metadata for a Kubernetes Deployment Object."""
-
-    labels: Labels
-
-
-class DeploymentEnv(KubernetesModel):
-    """Defines Environment vairbales for use within a Container."""
-
-    name: str
-    value: str
-
-
-class DeploymentContainer(KubernetesModel):
-    """Defines Specifications for a container within a Kubernetes Deployment Object."""
-
-    args: list[str] | None = None
-    command: list[str] | None = None
-    env: list[DeploymentEnv] | None = None
-    image: str
-    image_pull_policy: str = "Always"
-    name: str = "app"
-
-
-class DeploymentImagePullSecrets(KubernetesModel):
-    """Defines imagePullSecrets for a Kubernetes Deployment Object."""
-
-    name: str
-
-
 class DeploymentTemplateSpec(KubernetesModel):
     """Defines Specifications for a pod within a Kubernetes Deployment Object."""
 
-    containers: list[DeploymentContainer]
-    image_pull_secrets: list[DeploymentImagePullSecrets] | None = None
+    containers: list[Container]
+    node_selector: dict[str, str] | None = {"kubernetes.azure.com/scalesetpriority": "spot"}  # noqa: RUF012
+    tolerations: list[Tolerations] | None = [Tolerations(default_factory=Tolerations)]  # noqa: RUF012
+    image_pull_secrets: list[ImagePullSecrets] | None = None
     service_account_name: str
-
 
 class DeploymentTemplate(KubernetesModel):
     """Defines Template Specifications for a Kubernetes Deployment Object."""
 
-    metadata: DeploymentTemplateMetadata
+    metadata: Metadata
     spec: DeploymentTemplateSpec
-
-
-class DeploymentMetadata(KubernetesModel):
-    """Defines Metadata for a Kubernetes Deployment Object."""
-
-    labels: Labels
-    name: str
-    namespace: str
-
 
 class DeploymentSpec(KubernetesModel):
     """Defines Specifications for a Kubernetes Deployment Object."""
@@ -75,7 +37,7 @@ class Deployment(KubernetesModel):
 
     api_version: str = "apps/v1"
     kind: str = "Deployment"
-    metadata: DeploymentMetadata
+    metadata: Metadata
     spec: DeploymentSpec
 
 
@@ -83,7 +45,7 @@ def example() -> dict:
     """Provide an example Deployment Object."""
     labels = {"foo": "bar"}
     d = Deployment(
-        metadata=DeploymentMetadata(
+        metadata=Metadata(
             name="jeff",
             namespace="jeffspace",
             labels=labels,
@@ -91,18 +53,20 @@ def example() -> dict:
         spec=DeploymentSpec(
             selector=DeploymentSelector(match_labels=labels),
             template=DeploymentTemplate(
-                metadata=DeploymentTemplateMetadata(labels=labels),
+                metadata=Metadata(labels=labels),
                 spec=DeploymentTemplateSpec(
+                    node_selector=None,
+                    # tolerations=None,
                     containers=[
-                        DeploymentContainer(
+                        Container(
                             image="binkcore.azurecr.io/jeff:latest",
                             env=[
-                                DeploymentEnv(name="aaa", value="bbb"),
+                                EnvironmentVariable(name="aaa", value="bbb"),
                             ],
                         ),
                     ],
                     image_pull_secrets=[
-                        DeploymentImagePullSecrets(name="jeffcorp.jafafactory.io"),
+                        ImagePullSecrets(name="jeffcorp.jafafactory.io"),
                     ],
                     service_account_name="jeff",
                 ),
@@ -110,3 +74,6 @@ def example() -> dict:
         ),
     )
     print(d.model_dump(exclude_none=True, by_alias=True))  # noqa: T201
+
+if __name__ == "__main__":
+    example()

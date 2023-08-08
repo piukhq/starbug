@@ -14,3 +14,10 @@ class KubernetesModel(BaseModel):
     """Shared Model for all Kuberentes BaseModels."""
 
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+class Metadata(KubernetesModel):
+    """Shared Model for Kubernetes Metadata."""
+
+    labels: Labels | None = None
+    name: str | None = None
+    namespace: str | None = None

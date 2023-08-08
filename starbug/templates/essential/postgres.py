@@ -1,16 +1,14 @@
 """Postgres Application Kubernetes Objects."""
 
+from starbug.kube.common import Metadata
 from starbug.kube.deployment import (
     Deployment,
-    DeploymentContainer,
-    DeploymentEnv,
-    DeploymentMetadata,
     DeploymentSelector,
     DeploymentSpec,
     DeploymentTemplate,
-    DeploymentTemplateMetadata,
     DeploymentTemplateSpec,
 )
+from starbug.kube.pod import Container, EnvironmentVariable
 from starbug.kube.service import Service, ServiceMetadata, ServicePort, ServiceSpec
 from starbug.kube.serviceaccount import ServiceAccount, ServiceAccountMetadata
 
@@ -31,7 +29,7 @@ class Postgres:
             spec=ServiceSpec(ports=[ServicePort(port=5432, target_port=5432)], selector=self.labels),
         )
         self.deployment = Deployment(
-            metadata=DeploymentMetadata(
+            metadata=Metadata(
                 labels=self.labels,
                 namespace=self.namespace,
                 name=self.name,
@@ -39,13 +37,13 @@ class Postgres:
             spec=DeploymentSpec(
                 selector=DeploymentSelector(match_labels=self.labels),
                 template=DeploymentTemplate(
-                    metadata=DeploymentTemplateMetadata(labels=self.labels),
+                    metadata=Metadata(labels=self.labels),
                     spec=DeploymentTemplateSpec(
                         containers=[
-                            DeploymentContainer(
+                            Container(
                                 image="docker.io/postgres:14",
                                 env=[
-                                    DeploymentEnv(
+                                    EnvironmentVariable(
                                         name="POSTGRES_HOST_AUTH_METHOD",
                                         value="trust",
                                     ),
