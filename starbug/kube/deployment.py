@@ -9,6 +9,7 @@ class DeploymentSelector(KubernetesModel):
 
     match_labels: Labels
 
+
 class DeploymentTemplateSpec(KubernetesModel):
     """Defines Specifications for a pod within a Kubernetes Deployment Object."""
 
@@ -18,11 +19,13 @@ class DeploymentTemplateSpec(KubernetesModel):
     image_pull_secrets: list[ImagePullSecrets] | None = None
     service_account_name: str
 
+
 class DeploymentTemplate(KubernetesModel):
     """Defines Template Specifications for a Kubernetes Deployment Object."""
 
     metadata: Metadata
     spec: DeploymentTemplateSpec
+
 
 class DeploymentSpec(KubernetesModel):
     """Defines Specifications for a Kubernetes Deployment Object."""
@@ -74,6 +77,7 @@ def example() -> dict:
         ),
     )
     print(d.model_dump(exclude_none=True, by_alias=True))  # noqa: T201
+
 
 if __name__ == "__main__":
     example()

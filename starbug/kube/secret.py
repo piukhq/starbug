@@ -12,6 +12,7 @@ class Secret(KubernetesModel):
     metadata: Metadata
     data: dict
 
+
 def example() -> None:
     s = Secret(
         metadata=Metadata(
@@ -24,6 +25,7 @@ def example() -> None:
         },
     )
     print(s.model_dump(exclude_none=True, by_alias=True))  # noqa: T201
+
 
 if __name__ == "__main__":
     example()

@@ -1,4 +1,6 @@
 """Base Models for Kubernetes Jobs."""
+from kubernetes.watch import Watch
+
 
 from starbug.kube.common import KubernetesModel, Labels, Metadata
 from starbug.kube.pod import Container, ImagePullSecrets, Tolerations
@@ -10,6 +12,7 @@ class JobTemplateSpec(KubernetesModel):
     tolerations: list[Tolerations] | None = [Tolerations(default_factory=Tolerations)]  # noqa: RUF012
     image_pull_secrets: list[ImagePullSecrets] | None = None
     restart_policy: str = "Never"
+
 
 class JobTemplate(KubernetesModel):
     spec: JobTemplateSpec
@@ -25,7 +28,6 @@ class Job(KubernetesModel):
     kind: str = "Job"
     metadata: Metadata
     spec: JobSpec
-
 
 
 def example() -> None:
@@ -50,6 +52,7 @@ def example() -> None:
         ),
     )
     print(j.model_dump(exclude_none=True, by_alias=True))  # noqa: T201
+
 
 if __name__ == "__main__":
     example()

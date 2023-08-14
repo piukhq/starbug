@@ -47,3 +47,4 @@ class Redis:
                 ),
             ),
         )
+        self.all = [self.serviceaccount, self.service, self.deployment]

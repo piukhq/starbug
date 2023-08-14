@@ -1,6 +1,7 @@
-from starbug.kube.job import Job, JobSpec, JobTemplate, JobTemplateSpec
 from starbug.kube.common import Metadata
+from starbug.kube.job import Job, JobSpec, JobTemplate, JobTemplateSpec
 from starbug.kube.pod import Container, ImagePullSecrets
+
 
 class BootstrapDB:
     """Defines a Bootstrap DB Instance."""
@@ -32,3 +33,4 @@ class BootstrapDB:
                 ),
             ),
         )
+        self.all = [self.job]

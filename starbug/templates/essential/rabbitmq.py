@@ -47,3 +47,4 @@ class RabbitMQ:
                 ),
             ),
         )
+        self.all = [self.serviceaccount, self.service, self.deployment]

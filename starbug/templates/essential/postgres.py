@@ -55,3 +55,4 @@ class Postgres:
                 ),
             ),
         )
+        self.all = [self.serviceaccount, self.service, self.deployment]

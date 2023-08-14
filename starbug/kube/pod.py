@@ -11,16 +11,19 @@ class Tolerations(KubernetesModel):
     value: str = "spot"
     effect: str = "NoSchedule"
 
+
 class ImagePullSecrets(KubernetesModel):
     """Defines imagePullSecrets for a Kubernetes Pod Object."""
 
     name: str
+
 
 class EnvironmentVariable(KubernetesModel):
     """Defines Environment Variables for use within a Container."""
 
     name: str
     value: str
+
 
 class Container(KubernetesModel):
     """Defines a Container for use within a Kubernetes Pod Spec."""
