@@ -33,4 +33,7 @@ class BootstrapDB:
                 ),
             ),
         )
-        self.all = [self.job]
+
+    def __iter__(self) -> list:
+        """Return all Objects as a list."""
+        yield from [self.job]

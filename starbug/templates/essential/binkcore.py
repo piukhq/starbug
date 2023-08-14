@@ -19,4 +19,7 @@ class Binkcore:
                 ".dockerconfigjson": "eyJhdXRocyI6IHsiYmlua2NvcmUuYXp1cmVjci5pbyI6IHsidXNlcm5hbWUiOiAiYmlua2NvcmUiLCAicGFzc3dvcmQiOiAiaVpJRG05NEU0Uz1pWTZZWWVXSjRKNkk5UXNSbllqaUsiLCAiZW1haWwiOiAiZGV2b3BzQGJpbmsuY29tIiwgImF1dGgiOiAiWW1sdWEyTnZjbVU2YVZwSlJHMDVORVUwVXoxcFdUWlpXV1ZYU2pSS05razVVWE5TYmxscWFVcz0ifX19",  # noqa: E501
             },
         )
-        self.all = [self.secret]
+
+    def __iter__(self) -> list:
+        """Return all Objects as a list."""
+        yield from [self.secret]

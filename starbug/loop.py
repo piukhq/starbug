@@ -18,17 +18,11 @@ try:
     deployment = List(
         items=[
             namespace,
-            binkcore.secret,
-            postgres.serviceaccount,
-            postgres.service,
-            postgres.deployment,
-            rabbitmq.serviceaccount,
-            rabbitmq.service,
-            rabbitmq.deployment,
-            redis.serviceaccount,
-            redis.service,
-            redis.deployment,
-            bootstrap_db.job,
+            *binkcore,
+            *postgres,
+            *rabbitmq,
+            *redis,
+            *bootstrap_db,
         ],
     )
     create_kube_object(deployment.model_dump(by_alias=True))

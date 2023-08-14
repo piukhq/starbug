@@ -55,4 +55,7 @@ class Postgres:
                 ),
             ),
         )
-        self.all = [self.serviceaccount, self.service, self.deployment]
+
+    def __iter__(self) -> list:
+        """Return all Objects as a list."""
+        yield from [self.serviceaccount, self.service, self.deployment]
