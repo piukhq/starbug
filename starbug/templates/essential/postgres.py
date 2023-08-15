@@ -16,10 +16,11 @@ from starbug.kube.serviceaccount import ServiceAccount, ServiceAccountMetadata
 class Postgres:
     """Defines a Postgres Instance."""
 
-    def __init__(self, namespace: str) -> None:
+    def __init__(self, namespace: str, image: str | None = None) -> None:
         """Initialize the Postgres Class."""
         self.namespace = namespace
         self.name = "postgres"
+        self.image = "docker.io/postgres:14" if image is None else image
         self.labels = {"app": "postgres"}
         self.serviceaccount = ServiceAccount(
             metadata=ServiceAccountMetadata(name=self.name, namespace=self.namespace),
@@ -41,7 +42,7 @@ class Postgres:
                     spec=DeploymentTemplateSpec(
                         containers=[
                             Container(
-                                image="docker.io/postgres:14",
+                                image=self.image,
                                 env=[
                                     EnvironmentVariable(
                                         name="POSTGRES_HOST_AUTH_METHOD",

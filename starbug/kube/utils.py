@@ -30,3 +30,14 @@ def delete_kube_namespace(namespace: str) -> None:
     """Delete a Kubernetes Namespace."""
     kubernetes.config.load_config()
     kubernetes.client.CoreV1Api().delete_namespace(name=namespace)
+
+def get_kube_job_status(namespace: str, labels: dict) -> None:
+    label_selector = ",".join(["=".join([k, str(v)]) for k, v in labels.items()])
+    kubernetes.config.load_config()
+    response = kubernetes.client.BatchV1Api().list_namespaced_job(namespace=namespace, label_selector=label_selector)
+    status = "ongoing"
+    if response.items[0].status.succeeded is not None:
+        status = "complete"
+    elif response.items[0].status.failed is not None:
+        status = "failed"
+    return {"status": status}

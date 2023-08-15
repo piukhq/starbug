@@ -16,10 +16,11 @@ from starbug.kube.serviceaccount import ServiceAccount, ServiceAccountMetadata
 class RabbitMQ:
     """Defines a RabbitMQ Instance."""
 
-    def __init__(self, namespace: str) -> None:
+    def __init__(self, namespace: str, image: str | None = None ) -> None:
         """Initialize the RabbitMQ Class."""
         self.namespace = namespace
         self.name = "rabbitmq"
+        self.image = "docker.io/rabbitmq:3" if image is None else image
         self.labels = {"app": "rabbitmq"}
         self.serviceaccount = ServiceAccount(
             metadata=ServiceAccountMetadata(name=self.name, namespace=self.namespace),
@@ -40,7 +41,7 @@ class RabbitMQ:
                     metadata=Metadata(labels=self.labels),
                     spec=DeploymentTemplateSpec(
                         containers=[
-                            Container(image="docker.io/rabbitmq:3"),
+                            Container(image=self.image),
                         ],
                         service_account_name=self.serviceaccount.metadata.name,
                     ),

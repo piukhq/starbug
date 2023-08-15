@@ -16,11 +16,11 @@ class JobTemplateSpec(KubernetesModel):
 
 class JobTemplate(KubernetesModel):
     spec: JobTemplateSpec
-    backoff_limit: int = 0
 
 
 class JobSpec(KubernetesModel):
     template: JobTemplate
+    backoff_limit: int = 0
 
 
 class Job(KubernetesModel):
@@ -40,8 +40,8 @@ def example() -> None:
             ),
         ),
         spec=JobSpec(
+            backoff_limit=4,
             template=JobTemplate(
-                backoff_limit=4,
                 spec=JobTemplateSpec(
                     containers=[
                         Container(image="debian:12", command=["sleep", "60"]),
