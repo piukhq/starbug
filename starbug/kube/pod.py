@@ -25,6 +25,14 @@ class EnvironmentVariable(KubernetesModel):
     value: str
 
 
+class ContainerPort(KubernetesModel):
+    """Defines Ports for use within a Container."""
+
+    name: str
+    container_port: int
+    protocol: str
+
+
 class Container(KubernetesModel):
     """Defines a Container for use within a Kubernetes Pod Spec."""
 
@@ -34,3 +42,4 @@ class Container(KubernetesModel):
     image: str
     image_pull_policy: str = "Always"
     name: str = "app"
+    ports: list[ContainerPort] | None = None

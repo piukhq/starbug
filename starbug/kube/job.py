@@ -11,6 +11,7 @@ class JobTemplateSpec(KubernetesModel):
     node_selector: dict[str, str] | None = {"kubernetes.azure.com/scalesetpriority": "spot"}  # noqa: RUF012
     tolerations: list[Tolerations] | None = [Tolerations(default_factory=Tolerations)]  # noqa: RUF012
     image_pull_secrets: list[ImagePullSecrets] | None = None
+    service_account_name: str | None = None
     restart_policy: str = "Never"
 
 

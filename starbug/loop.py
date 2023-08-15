@@ -7,6 +7,7 @@ from starbug.templates.essential.bootstrapdb import BootstrapDB
 from starbug.templates.essential.postgres import Postgres
 from starbug.templates.essential.rabbitmq import RabbitMQ
 from starbug.templates.essential.redis import Redis
+from starbug.templates.devops.kiroshi import Kiroshi
 
 try:
     namespace = Namespace()
@@ -15,6 +16,7 @@ try:
     rabbitmq = RabbitMQ(namespace=namespace.metadata.name)
     redis = Redis(namespace=namespace.metadata.name)
     bootstrap_db = BootstrapDB(namespace=namespace.metadata.name)
+    kiroshi = Kiroshi(namespace=namespace.metadata.name)
     deployment = List(
         items=[
             namespace,
@@ -22,8 +24,8 @@ try:
             *postgres,
             *rabbitmq,
             *redis,
-            *bootstrap_db,
-        ]
+            *kiroshi,
+        ],
     )
     create_kube_object(deployment.model_dump(by_alias=True))
     print(namespace.metadata.name)
