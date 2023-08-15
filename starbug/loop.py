@@ -15,14 +15,16 @@ try:
     rabbitmq = RabbitMQ(namespace=namespace.metadata.name)
     redis = Redis(namespace=namespace.metadata.name)
     bootstrap_db = BootstrapDB(namespace=namespace.metadata.name)
-    deployment = List(items=[
-        namespace,
-        *binkcore,
-        *postgres,
-        *rabbitmq,
-        *redis,
-        *bootstrap_db,
-    ])
+    deployment = List(
+        items=[
+            namespace,
+            *binkcore,
+            *postgres,
+            *rabbitmq,
+            *redis,
+            *bootstrap_db,
+        ]
+    )
     create_kube_object(deployment.model_dump(by_alias=True))
     print(namespace.metadata.name)
     await_kube_job(namespace=namespace.metadata.name, labels=bootstrap_db.job.metadata.labels)

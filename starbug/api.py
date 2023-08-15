@@ -18,7 +18,6 @@ def test_status(namespace: str) -> dict:
     return {"status": "in_progress"}
 
 
-
 # def b_task() -> None:
 #     for _ in range(60):
 #         with Path.open("/tmp/progress.txt", "w+") as f:

@@ -22,6 +22,7 @@ class Components(BaseModel):
     name: str
     image: str | None = None
 
+
 class SpecTest(BaseModel):
     """New Test Specification.
 

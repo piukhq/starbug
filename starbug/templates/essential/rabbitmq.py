@@ -16,7 +16,7 @@ from starbug.kube.serviceaccount import ServiceAccount, ServiceAccountMetadata
 class RabbitMQ:
     """Defines a RabbitMQ Instance."""
 
-    def __init__(self, namespace: str, image: str | None = None ) -> None:
+    def __init__(self, namespace: str, image: str | None = None) -> None:
         """Initialize the RabbitMQ Class."""
         self.namespace = namespace
         self.name = "rabbitmq"

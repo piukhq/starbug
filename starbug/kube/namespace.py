@@ -11,7 +11,9 @@ from starbug.kube.common import KubernetesModel
 class NamespaceMetadata(KubernetesModel):
     """Defines Metadata for a Kubernetes Namespace Object."""
 
-    name: str = Field(default_factory=lambda: f"starbug-test-{''.join(random.choices(string.ascii_lowercase + string.digits, k=6))}")  # noqa: S311
+    name: str = Field(
+        default_factory=lambda: f"starbug-test-{''.join(random.choices(string.ascii_lowercase + string.digits, k=6))}",  # noqa: S311
+    )
     annotations: dict[str, str] = {"linkerd.io/inject": "enabled"}  # noqa: RUF012
 
 
