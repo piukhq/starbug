@@ -1,13 +1,15 @@
+from pathlib import Path
+
 from pydantic import BaseModel
 
 from starbug.kube.list import List
 from starbug.kube.namespace import Namespace
 from starbug.kube.utils import create_kube_object
 from starbug.templates.essential.binkcore import Binkcore
+from starbug.templates.essential.bootstrapdb import BootstrapDB
 from starbug.templates.essential.postgres import Postgres
 from starbug.templates.essential.rabbitmq import RabbitMQ
 from starbug.templates.essential.redis import Redis
-from starbug.templates.essential.bootstrapdb import BootstrapDB
 
 
 class Components(BaseModel):
@@ -43,6 +45,7 @@ component_index = {
 
 def create_test(components: Components) -> dict:
     namespace = Namespace()
+    test_id = namespace.metadata.name.split("-")[-1]
     items = [
         namespace,
         *Binkcore(namespace=namespace.metadata.name),
@@ -51,4 +54,6 @@ def create_test(components: Components) -> dict:
         resource = component_index[component.name]
         items.extend(resource(namespace=namespace.metadata.name, image=component.image))
     create_kube_object(List(items=items).model_dump(by_alias=True))
-    return {"test_id": namespace.metadata.name.split("-")[-1]}
+    if Path("/mnt/reports").exists():
+        Path(f"/mnt/reports/{test_id}").mkdir()
+    return {"test_id": test_id, "namespace": namespace.metadata.name}
