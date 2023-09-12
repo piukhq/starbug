@@ -1,13 +1,12 @@
 """Base Models for Kubernetes Jobs."""
-from kubernetes.watch import Watch
-
-
 from starbug.kube.common import KubernetesModel, Labels, Metadata
-from starbug.kube.pod import Container, ImagePullSecrets, Tolerations
+from starbug.kube.pod import Container, ImagePullSecrets, PodVolume, Tolerations
 
 
 class JobTemplateSpec(KubernetesModel):
     containers: list[Container]
+    init_containers: list[Container] | None = None
+    volumes: list[PodVolume] | None = None
     node_selector: dict[str, str] | None = {"kubernetes.azure.com/scalesetpriority": "spot"}  # noqa: RUF012
     tolerations: list[Tolerations] | None = [Tolerations(default_factory=Tolerations)]  # noqa: RUF012
     image_pull_secrets: list[ImagePullSecrets] | None = None

@@ -38,7 +38,6 @@ class Service(KubernetesModel):
 def example() -> dict:
     """Provide an example Service Object."""
     s = Service(
-        api_version="jeff",
         metadata=ServiceMetadata(
             name="jeff",
             namespace="jeffspace",

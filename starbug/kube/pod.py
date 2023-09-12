@@ -1,6 +1,20 @@
 """Base Models for Kubernetes Pods."""
 
+from pydantic import Field
+
 from starbug.kube.common import KubernetesModel
+
+
+class EmptyDir(KubernetesModel):
+    """Defines an EmptyDir."""
+
+    size_limit: str = "128Mi"
+
+class PodVolume(KubernetesModel):
+    """Defines a Pod Volume."""
+
+    name: str = "reports"
+    empty_dir: EmptyDir = Field(default_factory=EmptyDir)
 
 
 class Tolerations(KubernetesModel):
@@ -24,6 +38,12 @@ class EnvironmentVariable(KubernetesModel):
     name: str
     value: str
 
+class ContainerVolume(KubernetesModel):
+    """Defines a Volume for use within a Container."""
+
+    name: str = "reports"
+    mount_path: str = "/mnt/reports"
+
 
 class ContainerPort(KubernetesModel):
     """Defines Ports for use within a Container."""
@@ -43,3 +63,4 @@ class Container(KubernetesModel):
     image_pull_policy: str = "Always"
     name: str = "app"
     ports: list[ContainerPort] | None = None
+    volume_mounts: list[ContainerVolume] | None = None
