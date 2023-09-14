@@ -110,6 +110,6 @@ class Kiroshi:
             },
         })
 
-        def __iter__(self) -> tuple[Job, ServiceAccount, Service, Deployment]:
-            """Iterate over the Kiroshi Instance."""
-            yield from (self.serviceaccount, self.migrator, self.service, self.deployment)
+    def __iter__(self) -> tuple[Job, ServiceAccount, Service, Deployment]:
+        """Iterate over the Kiroshi Instance."""
+        yield from (self.serviceaccount, self.migrator, self.service, self.deployment)
