@@ -4,14 +4,13 @@ import random
 import string
 
 from loguru import logger
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from starbug.logic.exceptions import RetryLimitExceededError
 from starbug.models.api import SpecTest
 from starbug.models.database import Tests, engine
-
-import pendulum
 
 
 def create_test(spec: SpecTest) -> dict:
@@ -38,9 +37,44 @@ def create_test(spec: SpecTest) -> dict:
         logger.info(f"Creating Test {test_id}")
     return {"test_id": test_id}
 
-def list_test() -> dict:
-    """List tests."""
+def list_test() -> list:
+    """List all tests."""
     with Session(engine) as session:
-        query = Tests.select().where(Tests.created_at < pendulum.now().subtract(days=1))
-        results = session.execute(query)
-        return {"tests": [dict(row) for row in results]}
+        query = select(Tests)
+        results = session.execute(query).all()
+        return [row[0].to_dict() for row in results]
+
+def get_test(test_id: str) -> dict:
+    """Get a test."""
+    with Session(engine) as session:
+        query = select(Tests).where(Tests.id == test_id)
+        result = session.execute(query).first()
+        if not result:
+            return {}
+        return result[0].to_dict()
+
+def delete_test(test_id: str) -> dict:
+    """Delete a test."""
+    with Session(engine) as session:
+        query = select(Tests).where(Tests.id == test_id)
+        result = session.execute(query).first()
+        if not result:
+            return {}
+        update = Tests(
+            id=test_id,
+            status="deleted",
+        )
+        session.merge(update)
+        session.commit()
+        return {"test_id": test_id, "deleted": True}
+
+def purge_test(test_id: str) -> dict:
+    """Purge a test."""
+    with Session(engine) as session:
+        query = select(Tests).where(Tests.id == test_id)
+        result = session.execute(query).first()
+        if not result:
+            return {}
+        session.delete(result[0])
+        session.commit()
+        return {"test_id": test_id, "purged": True}

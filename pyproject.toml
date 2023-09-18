@@ -36,6 +36,7 @@ kr8s = "^0.8.17"
 rq = "^1.15.1"
 azure-identity = "^1.14.0"
 azure-mgmt-msi = "^7.0.0"
+sqlalchemy-mixins = "^2.0.5"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -23,13 +23,12 @@ class SetupAIT:
         })
         namespace.create()
 
-
     def deploy_infrastructure(self) -> None:
         """Deploy Infrastructure for a AIT Test."""
         pass
 
     def deploy_applications(self) -> None:
-        """Deploy the Applications for the AIT Test."""
+        """Deploy the Applications for a AIT Test."""
         pass
 
     def destroy_test(self) -> None:

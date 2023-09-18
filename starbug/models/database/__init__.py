@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, declarative_base, mapped_column
 from sqlalchemy.sql import func
+from sqlalchemy_mixins.serialize import SerializeMixin
 
 from starbug.settings import settings
 
@@ -13,7 +14,7 @@ engine = create_engine(settings.database_dsn)
 Base: DeclarativeBase = declarative_base()
 
 
-class Tests(Base):
+class Tests(Base, SerializeMixin):
     """Model representing tests in the database.
 
     Attributes
@@ -24,7 +25,7 @@ class Tests(Base):
         report (str): The report of the job.
     """
 
-    __tablename__ = "jobs"
+    __tablename__ = "tests"
 
     id: Mapped[str] = mapped_column(nullable=False, primary_key=True)  # noqa: A003
     status: Mapped[str] = mapped_column(nullable=False, server_default="pending")

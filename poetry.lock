@@ -1975,6 +1975,21 @@ pymysql = ["pymysql"]
 sqlcipher = ["sqlcipher3-binary"]
 
 [[package]]
+name = "sqlalchemy-mixins"
+version = "2.0.5"
+description = "Active Record, Django-like queries, nested eager load and beauty __repr__ for SQLAlchemy"
+optional = false
+python-versions = "*"
+files = [
+    {file = "sqlalchemy_mixins-2.0.5-py3-none-any.whl", hash = "sha256:9067b630744741b472aa91d92494cc5612ed2d29c66729a5a4a1d3fbbeccd448"},
+    {file = "sqlalchemy_mixins-2.0.5.tar.gz", hash = "sha256:85197fc3682c4bf9c35671fb3d10282a0973b19cd2ff2b6791d601cbfb0fb89e"},
+]
+
+[package.dependencies]
+six = "*"
+SQLAlchemy = ">=2.0"
+
+[[package]]
 name = "starlette"
 version = "0.27.0"
 description = "The little ASGI library that shines."
@@ -2181,4 +2196,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "89753d2eee51e97413e9a5eda80d5b5a874270340f12dbdead5bd9a93536e416"
+content-hash = "0446a79945604991b2049ec39c24006d076e890f6064772b9384e75d3cbfeb00"
