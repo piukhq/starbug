@@ -1,22 +1,32 @@
+"""API Endpoints for Starbug."""
+
 from fastapi import FastAPI, status
 
-from starbug.helper import SpecTest, create_test
-from starbug.kube.namespace import Namespace
+from starbug.logic.api import create_test
+from starbug.models.api import SpecTest
 
 api = FastAPI()
 
 
-@api.post("/test/create", status_code=status.HTTP_201_CREATED)
-def test_create(spec: SpecTest) -> dict:
-    """Creates a new Test."""
-    return create_test(components=spec.components)
+@api.get("/test", status_code=status.HTTP_200_OK)
+def list_test() -> dict:
+    """Get a list of all Tests."""
+    return [{"test_id": "test1"}, {"test_id": "test2"}]
+
+@api.get("/test/{test_id}", status_code=status.HTTP_200_OK)
+def get_test(test_id: str) -> dict:
+    """Get a Test."""
+    return {"test_id": test_id}
+
+@api.delete("/test/{test_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_test(test_id: str) -> None:
+    """Delete a Test."""
 
 
-@api.get("/test/status/{namespace}", status_code=status.HTTP_202_ACCEPTED)
-def test_status(namespace: str) -> dict:
-    """Checks the Status of an ongoing test."""
-    return {"status": "in_progress"}
-
+@api.post("/test", status_code=status.HTTP_201_CREATED)
+def post_test(spec: SpecTest) -> dict:
+    """Create a new Test."""
+    return create_test(spec=spec)
 
 # def b_task() -> None:
 #     for _ in range(60):

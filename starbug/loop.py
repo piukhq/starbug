@@ -2,12 +2,13 @@
 from starbug.kube.list import List
 from starbug.kube.namespace import Namespace
 from starbug.kube.utils import JobTimeoutError, await_kube_job, create_kube_object, delete_kube_namespace
+from starbug.templates.devops.kiroshi import Kiroshi
 from starbug.templates.essential.binkcore import Binkcore
 from starbug.templates.essential.bootstrapdb import BootstrapDB
 from starbug.templates.essential.postgres import Postgres
 from starbug.templates.essential.rabbitmq import RabbitMQ
 from starbug.templates.essential.redis import Redis
-from starbug.templates.devops.kiroshi import Kiroshi
+from starbug.templates.tests.kiroshi import TestComponentKiroshi
 
 try:
     namespace = Namespace()
@@ -17,19 +18,22 @@ try:
     redis = Redis(namespace=namespace.metadata.name)
     bootstrap_db = BootstrapDB(namespace=namespace.metadata.name)
     kiroshi = Kiroshi(namespace=namespace.metadata.name)
+    test_kiroshi = TestComponentKiroshi(namespace=namespace.metadata.name)
     deployment = List(
         items=[
             namespace,
             *binkcore,
             *postgres,
+            *bootstrap_db,
             *rabbitmq,
             *redis,
             *kiroshi,
+            *test_kiroshi,
         ],
     )
     create_kube_object(deployment.model_dump(by_alias=True))
     print(namespace.metadata.name)
-    await_kube_job(namespace=namespace.metadata.name, labels=bootstrap_db.job.metadata.labels)
+    # await_kube_job(namespace=namespace.metadata.name, labels=bootstrap_db.job.metadata.labels)
 except JobTimeoutError:
     print("Timeout, killing tests")
     delete_kube_namespace(namespace=namespace.metadata.name)

@@ -1,3 +1,4 @@
+"""Define a Kiroshi Instance."""
 from kr8s.objects import Deployment, Job, Service, ServiceAccount
 
 
@@ -96,6 +97,8 @@ class Kiroshi:
                         },
                     },
                     "spec": {
+                        "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
+                        "serviceAccountName": self.name,
                         "containers": [
                             {
                                 "name": "app",
