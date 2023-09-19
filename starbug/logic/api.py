@@ -19,7 +19,7 @@ from starbug.settings import settings
 
 def create_test(spec: SpecTest) -> dict:
     """Create a test and return its ID."""
-    queue = Queue(connection=redis.from_url(settings.redis_dsn))
+    queue = Queue(connection=redis.from_url(settings.redis_dsn), default_timeout=3600)
     with Session(engine) as session:
         retry_limit = 3
         while True:
