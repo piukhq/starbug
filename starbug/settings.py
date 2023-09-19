@@ -3,7 +3,7 @@
 from typing import Annotated, ClassVar
 from uuid import UUID
 
-from pydantic import HttpUrl, PlainValidator, PostgresDsn
+from pydantic import HttpUrl, PlainValidator, PostgresDsn, RedisDsn
 from pydantic_settings import BaseSettings
 
 
@@ -14,6 +14,7 @@ class Settings(BaseSettings):
         str,
         PlainValidator(lambda value: PostgresDsn(value).unicode_string()),
     ] = "postgresql+psycopg://postgres@localhost:5432/postgres"
+    redis_dsn: RedisDsn = "redis://localhost:6379/0"
 
 
 settings = Settings()

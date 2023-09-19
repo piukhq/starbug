@@ -3,8 +3,8 @@
 import random
 
 import randomname
+import redis
 from loguru import logger
-from redis import Redis
 from rq import Queue
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -14,11 +14,12 @@ from starbug.logic.exceptions import RetryLimitExceededError
 from starbug.logic.kubernetes import SetupAIT
 from starbug.models.api import SpecTest
 from starbug.models.database import Tests, engine
+from starbug.settings import settings
 
 
 def create_test(spec: SpecTest) -> dict:
     """Create a test and return its ID."""
-    queue = Queue(connection=Redis())
+    queue = Queue(connection=redis.from_url(settings.redis_dsn))
     with Session(engine) as session:
         retry_limit = 3
         while True:
