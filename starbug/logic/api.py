@@ -4,17 +4,21 @@ import random
 
 import randomname
 from loguru import logger
+from redis import Redis
+from rq import Queue
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from starbug.logic.exceptions import RetryLimitExceededError
+from starbug.logic.kubernetes import SetupAIT
 from starbug.models.api import SpecTest
 from starbug.models.database import Tests, engine
 
 
 def create_test(spec: SpecTest) -> dict:
     """Create a test and return its ID."""
+    queue = Queue(connection=Redis())
     with Session(engine) as session:
         retry_limit = 3
         while True:
@@ -31,6 +35,7 @@ def create_test(spec: SpecTest) -> dict:
                 )
                 session.add(insert)
                 session.commit()
+                queue.enqueue(SetupAIT(test_id=test_id).run)
                 break
             except IntegrityError:
                 logger.info(f"Duplicate Test ID {test_id}, trying again")

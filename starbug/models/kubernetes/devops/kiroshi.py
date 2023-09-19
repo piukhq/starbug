@@ -5,11 +5,11 @@ from kr8s.objects import Deployment, Job, Service, ServiceAccount
 class Kiroshi:
     """Define a Kiroshi Instance."""
 
-    def __init__(self, namespace: str) -> None:
+    def __init__(self, namespace: str, image: str | None = None) -> None:
         """.Initialize the Kiroshi class."""
         self.namespace = namespace
         self.name = "kiroshi"
-        self.image = "binkcore.azurecr.io/kiroshi:prod"
+        self.image = image or "binkcore.azurecr.io/kiroshi:prod"
         self.labels = {"app": "kiroshi"}
         self.env = [
             {
@@ -21,7 +21,7 @@ class Kiroshi:
                 "value": "postgresql://postgres@postgres:5432/postgres",
             },
         ]
-        self.service_account = ServiceAccount({
+        self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
             "metadata": {
@@ -30,7 +30,7 @@ class Kiroshi:
             },
         })
         self.migrator = Job({
-            "apiVersion": "v1",
+            "apiVersion": "batch/v1",
             "kind": "Job",
             "metadata": {
                 "name": self.name + "-migrator",
@@ -97,6 +97,15 @@ class Kiroshi:
                         },
                     },
                     "spec": {
+                        "nodeSelector": {
+                            "kubernetes.azure.com/scalesetpriority": "spot",
+                        },
+                        "tolerations": [{
+                            "key": "kubernetes.azure.com/scalesetpriority",
+                            "operator": "Equal",
+                            "value": "spot",
+                            "effect": "NoSchedule",
+                        }],
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         "serviceAccountName": self.name,
                         "containers": [
@@ -113,6 +122,6 @@ class Kiroshi:
             },
         })
 
-    def __iter__(self) -> tuple[Job, ServiceAccount, Service, Deployment]:
+    def obj(self) -> tuple[Job, ServiceAccount, Service, Deployment]:
         """Iterate over the Kiroshi Instance."""
-        yield from (self.serviceaccount, self.migrator, self.service, self.deployment)
+        return (self.serviceaccount, self.migrator, self.service, self.deployment)

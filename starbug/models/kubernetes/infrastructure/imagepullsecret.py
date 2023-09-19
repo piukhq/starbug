@@ -21,6 +21,6 @@ class BinkCore:
             },
         })
 
-    def __iter__(self) -> tuple[Secret]:
+    def obj(self) -> tuple[Secret]:
         """Iterate over the Kiroshi Instance."""
-        yield from (self.secret)
+        return (self.secret)

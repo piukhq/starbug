@@ -5,10 +5,10 @@ from kr8s.objects import Deployment, Service, ServiceAccount
 class Postgres:
     """Define a Postgres Instance."""
 
-    def __init__(self, namespace: str, image: str = "docker.io/postgres:15") -> None:
+    def __init__(self, namespace: str, image: str | None = None) -> None:
         """.Initialize the Postgres class."""
         self.namespace = namespace
-        self.image = image
+        self.image = image or "docker.io/postgres:15"
         self.name = "postgres"
         self.labels = {"app": "postgres"}
         self.serviceaccount = ServiceAccount({
@@ -53,6 +53,15 @@ class Postgres:
                         },
                     },
                     "spec": {
+                        "nodeSelector": {
+                            "kubernetes.azure.com/scalesetpriority": "spot",
+                        },
+                        "tolerations": [{
+                            "key": "kubernetes.azure.com/scalesetpriority",
+                            "operator": "Equal",
+                            "value": "spot",
+                            "effect": "NoSchedule",
+                        }],
                         "serviceAccountName": self.name,
                         "containers": [
                             {
@@ -72,6 +81,6 @@ class Postgres:
             },
         })
 
-    def __iter__(self) -> tuple[ServiceAccount, Service, Deployment]:
-        """Iterate over the Kiroshi Instance."""
-        yield from (self.serviceaccount, self.service, self.deployment)
+    def obj(self) -> tuple[ServiceAccount, Service, Deployment]:
+        """Loop over the Kiroshi Instance."""
+        return (self.serviceaccount, self.service, self.deployment)

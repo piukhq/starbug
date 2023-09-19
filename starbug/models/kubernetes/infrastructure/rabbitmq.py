@@ -5,10 +5,10 @@ from kr8s.objects import Deployment, Service, ServiceAccount
 class RabbitMQ:
     """Define a RabbitMQ Instance."""
 
-    def __init__(self, namespace: str, image: str = "docker.io/rabbitmq:3") -> None:
+    def __init__(self, namespace: str, image: str | None = None) -> None:
         """Initialize the RabbitMQ class."""
         self.namespace = namespace
-        self.image = image
+        self.image = image or "docker.io/rabbitmq:3"
         self.name = "rabbitmq"
         self.labels = {"app": "rabbitmq"}
         self.serviceaccount = ServiceAccount({
@@ -53,6 +53,15 @@ class RabbitMQ:
                         },
                     },
                     "spec": {
+                        "nodeSelector": {
+                            "kubernetes.azure.com/scalesetpriority": "spot",
+                        },
+                        "tolerations": [{
+                            "key": "kubernetes.azure.com/scalesetpriority",
+                            "operator": "Equal",
+                            "value": "spot",
+                            "effect": "NoSchedule",
+                        }],
                         "serviceAccountName": self.name,
                         "containers": [
                             {
@@ -66,6 +75,6 @@ class RabbitMQ:
             },
         })
 
-    def __iter__(self) -> tuple[ServiceAccount, Service, Deployment]:
+    def obj(self) -> tuple[ServiceAccount, Service, Deployment]:
         """Iterate over the Kiroshi Instance."""
-        yield from (self.serviceaccount, self.service, self.deployment)
+        return (self.serviceaccount, self.service, self.deployment)

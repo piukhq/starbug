@@ -5,10 +5,10 @@ from kr8s.objects import Deployment, Service, ServiceAccount
 class Redis:
     """Define a Redis Instance."""
 
-    def __init__(self, namespace: str, image: str = "docker.io/redis:6") -> None:
+    def __init__(self, namespace: str, image: str | None = None) -> None:
         """Initialize the Redis class."""
         self.namespace = namespace
-        self.image = image
+        self.image = image or "docker.io/redis:6"
         self.name = "redis"
         self.labels = {"app": "redis"}
         self.serviceaccount = ServiceAccount({
@@ -53,6 +53,15 @@ class Redis:
                         },
                     },
                     "spec": {
+                        "nodeSelector": {
+                            "kubernetes.azure.com/scalesetpriority": "spot",
+                        },
+                        "tolerations": [{
+                            "key": "kubernetes.azure.com/scalesetpriority",
+                            "operator": "Equal",
+                            "value": "spot",
+                            "effect": "NoSchedule",
+                        }],
                         "serviceAccountName": self.name,
                         "containers": [
                             {
@@ -65,3 +74,7 @@ class Redis:
                 },
             },
         })
+
+    def obj(self) -> tuple[ServiceAccount, Service, Deployment]:
+        """Return a tuple of Kubernetes Objects."""
+        return (self.serviceaccount, self.service, self.deployment)
