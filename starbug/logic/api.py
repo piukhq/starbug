@@ -1,8 +1,8 @@
 """Logic for API Endpoints."""
 
 import random
-import string
 
+import randomname
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -22,10 +22,12 @@ def create_test(spec: SpecTest) -> dict:
                 if retry_limit == 0:
                     raise RetryLimitExceededError
                 retry_limit -= 1
-                test_id = spec.test_id if spec.test_id else "".join(random.choices(string.ascii_lowercase + string.digits, k=6)) # noqa: S311
+                adjective = random.choice(["size", "appearance", "age", "speed"])
+                noun = random.choice(["apex_predators", "birds", "ghosts"])
+                test_id = randomname.generate(f"adj/{adjective}", "adj/colors", f"nouns/{noun}")
                 insert = Tests(
                     id=test_id,
-                    spec=spec.model_dump(exclude_unset=True),
+                    spec=spec.model_dump(),
                 )
                 session.add(insert)
                 session.commit()
@@ -41,23 +43,23 @@ def list_test() -> list:
     """List all tests."""
     with Session(engine) as session:
         query = select(Tests)
-        results = session.execute(query).all()
-        return [row[0].to_dict() for row in results]
+        results = session.execute(query).scalars().all()
+        return [{"id": row.id, "status": row.status, "report": row.report} for row in results]
 
 def get_test(test_id: str) -> dict:
     """Get a test."""
     with Session(engine) as session:
         query = select(Tests).where(Tests.id == test_id)
-        result = session.execute(query).first()
+        result = session.execute(query).scalars().first()
         if not result:
             return {}
-        return result[0].to_dict()
+        return {"id": result.id, "status": result.status, "created_at": result.created_at, "updated_at": result.updated_at, "spec": result.spec, "report": result.report}
 
 def delete_test(test_id: str) -> dict:
     """Delete a test."""
     with Session(engine) as session:
         query = select(Tests).where(Tests.id == test_id)
-        result = session.execute(query).first()
+        result = session.execute(query).scalars().first()
         if not result:
             return {}
         update = Tests(
@@ -72,9 +74,9 @@ def purge_test(test_id: str) -> dict:
     """Purge a test."""
     with Session(engine) as session:
         query = select(Tests).where(Tests.id == test_id)
-        result = session.execute(query).first()
+        result = session.execute(query).scalars().first()
         if not result:
             return {}
-        session.delete(result[0])
+        session.delete(result)
         session.commit()
         return {"test_id": test_id, "purged": True}

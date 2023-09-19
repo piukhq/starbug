@@ -19,7 +19,6 @@ class SpecTest(BaseModel):
     """New Test Specification.
 
     Args:
-        test_id (str, optional): The ID of the test, example "abc123", defaults to a random string.
         infrastructure (list[Resource], optional): A list of infrastructure resources to create,
             example: [{"name": "postgres", "image": "docker.io/postgres:14"}, {"name": "redis"}]
         applications (list[Resource], optional): A list of applications to create,
@@ -28,7 +27,6 @@ class SpecTest(BaseModel):
         timeout (int, optional): The timeout for the test in minutes, defaults to 60.
     """
 
-    test_id: str | None = None
     infrastructure: list[Resource] | None = None
     applications: list[Resource] | None = None
     test_suite: Resource | None = None

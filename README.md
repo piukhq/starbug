@@ -1,6 +1,6 @@
 # Starbug
 
-## Example JSON Request
+## Example JSON Requests
 
 ```json
 # POST /test

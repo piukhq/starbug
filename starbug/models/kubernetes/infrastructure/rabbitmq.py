@@ -5,11 +5,11 @@ from kr8s.objects import Deployment, Service, ServiceAccount
 class RabbitMQ:
     """Define a RabbitMQ Instance."""
 
-    def __init__(self, namespace: str) -> None:
+    def __init__(self, namespace: str, image: str = "docker.io/rabbitmq:3") -> None:
         """Initialize the RabbitMQ class."""
         self.namespace = namespace
+        self.image = image
         self.name = "rabbitmq"
-        self.image = "docker.io/rabbitmq:3"
         self.labels = {"app": "rabbitmq"}
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",

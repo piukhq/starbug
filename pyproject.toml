@@ -36,7 +36,7 @@ kr8s = "^0.8.17"
 rq = "^1.15.1"
 azure-identity = "^1.14.0"
 azure-mgmt-msi = "^7.0.0"
-sqlalchemy-mixins = "^2.0.5"
+randomname = "^0.2.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -49,5 +49,5 @@ line-length = 120
 
 [tool.ruff]
 select = ["ALL"]
-ignore = ["D203", "D213", "D407", "ANN101", "PLR0913", "PERF203"]
+ignore = ["D203", "D213", "D407", "ANN101", "PLR0913", "PERF203", "S311"]
 line-length = 250

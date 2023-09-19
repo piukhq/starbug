@@ -5,11 +5,11 @@ from kr8s.objects import Deployment, Service, ServiceAccount
 class Redis:
     """Define a Redis Instance."""
 
-    def __init__(self, namespace: str) -> None:
+    def __init__(self, namespace: str, image: str = "docker.io/redis:6") -> None:
         """Initialize the Redis class."""
         self.namespace = namespace
+        self.image = image
         self.name = "redis"
-        self.image = "docker.io/redis:6"
         self.labels = {"app": "redis"}
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",

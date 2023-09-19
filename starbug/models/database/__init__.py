@@ -6,7 +6,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, declarative_base, mapped_column
 from sqlalchemy.sql import func
-from sqlalchemy_mixins.serialize import SerializeMixin
 
 from starbug.settings import settings
 
@@ -14,7 +13,7 @@ engine = create_engine(settings.database_dsn)
 Base: DeclarativeBase = declarative_base()
 
 
-class Tests(Base, SerializeMixin):
+class Tests(Base):
     """Model representing tests in the database.
 
     Attributes

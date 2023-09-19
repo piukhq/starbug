@@ -5,11 +5,11 @@ from kr8s.objects import Deployment, Service, ServiceAccount
 class Postgres:
     """Define a Postgres Instance."""
 
-    def __init__(self, namespace: str) -> None:
+    def __init__(self, namespace: str, image: str = "docker.io/postgres:15") -> None:
         """.Initialize the Postgres class."""
         self.namespace = namespace
+        self.image = image
         self.name = "postgres"
-        self.image = "docker.io/postgres:15"
         self.labels = {"app": "postgres"}
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
