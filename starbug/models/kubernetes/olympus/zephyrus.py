@@ -1,19 +1,37 @@
-"""Initialize the Redis class."""
+"""Defines a Zephyrus Instance."""
+
 from kr8s.objects import Deployment, Service, ServiceAccount
 
+from starbug.logic.secrets import get_secret_value
 
-class Redis:
-    """Define a Redis Instance."""
+
+class Zephyrus:
+    """Defines a Zephyrus Instance."""
 
     def __init__(self, namespace: str, image: str | None = None) -> None:
-        """Initialize the Redis class."""
+        """Initialize the Zephyrus class."""
         self.namespace = namespace
-        self.image = image or "docker.io/redis:6"
-        self.name = "redis"
-        self.labels = {"app": "redis"}
+        self.name = "zephyrus"
+        self.image = image or "binkcore.azurecr.io/zephyrus:prod"
+        self.labels = {"app": "zephyrus"}
+        self.env = {
+            "AZURE_CERTIFICATE_FOLDER": "certs",
+            "AZURE_CONTAINER": "dev-zephyrus",
+            "HERMES_URL": "http://hermes",
+            "MASTERCARD_CERTIFICATE_BLOB_NAME": "certificate.pem",
+            "SENTRY_DSN": "https://286fc47f67974edc9761b7ae7fc502c2@o503751.ingest.sentry.io/5610043",
+            "SENTRY_ENV": "ait",
+            "VISA_PASSWORD": "7Taq_e-VY9KU",
+            "VISA_USERNAME": "VisaTxTest@testbink.com",
+            "KEYVAULT_URI": get_secret_value("azure-keyvault", "url"),
+            "AMQP_URL": "amqp://rabbitmq:5672/",
+        }
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
+            "annotations": {
+                "azure.workload.identity/client-id": get_secret_value("azure-identities", "zephyrus_client_id"),
+            },
             "metadata": {
                 "name": self.name,
                 "namespace": self.namespace,
@@ -28,7 +46,7 @@ class Redis:
                 "labels": self.labels,
             },
             "spec": {
-                "ports": [{"port": 6379, "targetPort": 6379}],
+                "ports": [{"port": 80, "targetPort": 9000}],
                 "selector": self.labels,
             },
         })
@@ -41,7 +59,6 @@ class Redis:
                 "labels": self.labels,
             },
             "spec": {
-                "replicas": 1,
                 "selector": {
                     "matchLabels": self.labels,
                 },
@@ -49,7 +66,7 @@ class Redis:
                     "metadata": {
                         "labels": self.labels,
                         "annotations": {
-                            "kubectl.kubernetes.io/default-container": "redis",
+                            "kubectl.kubernetes.io/default-container": self.name,
                         },
                     },
                     "spec": {
@@ -63,18 +80,16 @@ class Redis:
                             "effect": "NoSchedule",
                         }],
                         "serviceAccountName": self.name,
+                        "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         "containers": [
                             {
-                                "name": "redis",
+                                "name": self.name,
                                 "image": self.image,
-                                "ports": [{"containerPort": 6379}],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "ports": [{"containerPort": 9000}],
                             },
                         ],
                     },
                 },
             },
         })
-
-    def everything(self) -> tuple[ServiceAccount, Service, Deployment]:
-        """Return all deployable objects as a tuple."""
-        return (self.serviceaccount, self.service, self.deployment)

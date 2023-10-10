@@ -1,16 +1,20 @@
-"""Initialize the Redis class."""
+"""Defines a Skiron Instance."""
+
 from kr8s.objects import Deployment, Service, ServiceAccount
 
 
-class Redis:
-    """Define a Redis Instance."""
+class Skiron:
+    """Defines a Skiron Instance."""
 
     def __init__(self, namespace: str, image: str | None = None) -> None:
-        """Initialize the Redis class."""
+        """Initialize the Skiron class."""
         self.namespace = namespace
-        self.image = image or "docker.io/redis:6"
-        self.name = "redis"
-        self.labels = {"app": "redis"}
+        self.name = "skiron"
+        self.image = image or "binkcore.azurecr.io/skiron:prod"
+        self.labels = {"app": "skiron"}
+        self.env = {
+            "AMQP_DSN": "amqp://rabbitmq:5672/",
+        }
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
@@ -28,7 +32,7 @@ class Redis:
                 "labels": self.labels,
             },
             "spec": {
-                "ports": [{"port": 6379, "targetPort": 6379}],
+                "ports": [{"port": 80, "targetPort": 9000}],
                 "selector": self.labels,
             },
         })
@@ -41,7 +45,6 @@ class Redis:
                 "labels": self.labels,
             },
             "spec": {
-                "replicas": 1,
                 "selector": {
                     "matchLabels": self.labels,
                 },
@@ -49,32 +52,20 @@ class Redis:
                     "metadata": {
                         "labels": self.labels,
                         "annotations": {
-                            "kubectl.kubernetes.io/default-container": "redis",
+                            "kubectl.kubernetes.io/default-container": self.name,
                         },
                     },
                     "spec": {
-                        "nodeSelector": {
-                            "kubernetes.azure.com/scalesetpriority": "spot",
-                        },
-                        "tolerations": [{
-                            "key": "kubernetes.azure.com/scalesetpriority",
-                            "operator": "Equal",
-                            "value": "spot",
-                            "effect": "NoSchedule",
-                        }],
                         "serviceAccountName": self.name,
-                        "containers": [
-                            {
-                                "name": "redis",
-                                "image": self.image,
-                                "ports": [{"containerPort": 6379}],
-                            },
-                        ],
+                        "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
+                        "containers": [{
+                            "name": self.name,
+                            "image": self.image,
+                            "imagePullPolicy": "Always",
+                            "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                            "ports": [{"containerPort": 9000}],
+                        }],
                     },
                 },
             },
         })
-
-    def everything(self) -> tuple[ServiceAccount, Service, Deployment]:
-        """Return all deployable objects as a tuple."""
-        return (self.serviceaccount, self.service, self.deployment)

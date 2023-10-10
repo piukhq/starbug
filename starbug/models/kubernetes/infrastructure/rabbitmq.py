@@ -75,6 +75,6 @@ class RabbitMQ:
             },
         })
 
-    def obj(self) -> tuple[ServiceAccount, Service, Deployment]:
-        """Iterate over the Kiroshi Instance."""
+    def everything(self) -> tuple[ServiceAccount, Service, Deployment]:
+        """Return all deployable objects as a tuple."""
         return (self.serviceaccount, self.service, self.deployment)

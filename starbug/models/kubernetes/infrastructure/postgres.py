@@ -1,5 +1,5 @@
 """Define a Postgres Instance."""
-from kr8s.objects import Deployment, Service, ServiceAccount
+from kr8s.objects import ConfigMap, Deployment, Service, ServiceAccount
 
 
 class Postgres:
@@ -11,6 +11,41 @@ class Postgres:
         self.image = image or "docker.io/postgres:15"
         self.name = "postgres"
         self.labels = {"app": "postgres"}
+        self.databases = [
+            "europa",
+            "hades",
+            "vela",
+            "harmonia",
+            "hermes",
+            "hubble",
+            "api_reflector",
+            "zagreus",
+            "atlas",
+            "midas",
+            "carina",
+            "copybot",
+            "cosmos",
+            "momus",
+            "eos",
+            "polaris",
+            "bullsquid",
+            "pontus",
+            "snowstorm",
+            "thanatos",
+            "prefect",
+            "kiroshi",
+        ] # List generated via: az postgres flexible-server db list --server-name uksouth-staging-2o6h --resource-group uksouth-staging | jq .[].name -r
+        self.configmap = ConfigMap({
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {
+                "name": self.name + "-init-script",
+                "namespace": self.namespace,
+            },
+            "data": {
+                "create-multiple-postgresql-databases.sh": "#!/bin/bash\n\nset -e\nset -u\n\nfunction create_user_and_database() {\n\tlocal database=$1\n\techo \"  Creating user and database '$database'\"\n\tpsql -v ON_ERROR_STOP=1 --username \"$POSTGRES_USER\" \u003c\u003c-EOSQL\n\t    CREATE USER $database;\n\t    CREATE DATABASE $database;\n\t    GRANT ALL PRIVILEGES ON DATABASE $database TO $database;\nEOSQL\n}\n\nif [ -n \"$POSTGRES_MULTIPLE_DATABASES\" ]; then\n\techo \"Multiple database creation requested: $POSTGRES_MULTIPLE_DATABASES\"\n\tfor db in $(echo $POSTGRES_MULTIPLE_DATABASES | tr ',' ' '); do\n\t\tcreate_user_and_database $db\n\tdone\n\techo \"Multiple databases created\"\nfi\n",  # noqa: E501
+            },
+        })
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
@@ -63,6 +98,14 @@ class Postgres:
                             "effect": "NoSchedule",
                         }],
                         "serviceAccountName": self.name,
+                        "volumes": [
+                            {
+                                "name": "init-script",
+                                "configMap": {
+                                    "name": self.name + "-init-script",
+                                },
+                            },
+                        ],
                         "containers": [
                             {
                                 "name": "postgres",
@@ -73,6 +116,16 @@ class Postgres:
                                         "name": "POSTGRES_HOST_AUTH_METHOD",
                                         "value": "trust",
                                     },
+                                    {
+                                        "name": "POSTGRES_MULTIPLE_DATABASES",
+                                        "value": ",".join(self.databases),
+                                    },
+                                ],
+                                "volumeMounts": [
+                                    {
+                                        "name": "init-script",
+                                        "mountPath": "/docker-entrypoint-initdb.d",
+                                    },
                                 ],
                             },
                         ],
@@ -81,6 +134,6 @@ class Postgres:
             },
         })
 
-    def obj(self) -> tuple[ServiceAccount, Service, Deployment]:
-        """Loop over the Kiroshi Instance."""
-        return (self.serviceaccount, self.service, self.deployment)
+    def everything(self) -> tuple[ConfigMap, ServiceAccount, Service, Deployment]:
+        """Return all deployable objects as a tuple."""
+        return (self.configmap, self.serviceaccount, self.service, self.deployment)

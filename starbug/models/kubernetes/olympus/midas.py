@@ -1,46 +1,40 @@
-"""Defines a Hermes Instance."""
+"""Defines a Midas Instance."""
 
 from kr8s.objects import Deployment, Job, Service, ServiceAccount
 
 from starbug.logic.secrets import get_secret_value
 
 
-class Hermes:
-    """Defines a Hermes Instance."""
+class Midas:
+    """Defines a Midas Instance."""
 
     def __init__(self, namespace: str, image: str | None = None) -> None:
-        """Initialize the Hermes class."""
+        """Initialize the Midas class."""
         self.namespace = namespace
-        self.name = "hermes"
-        self.image = image or "binkcore.azurecr.io/hermes:prod"
-        self.labels = {"app": "hermes"}
+        self.name = "midas"
+        self.image = image or "binkcore.azurecr.io/midas:prod"
+        self.labels = {"app": "midas"}
         self.env = {
-            "ATLAS_URL": "http://atlas/audit",
-            "DEFAULT_API_VERSION": "1.1",
-            "ENVIRONMENT_COLOR": "#FF69B4",
-            "ENVIRONMENT_NAME": "Automated Integration Testing Envrionment",
+            "ATLAS_URL": "http://atlas",
+            "AZURE_AAD_TENANT_ID": "a6e2367a-92ea-4e5a-b565-723830bcc095",
+            "CONFIG_SERVICE_URL": "http://europa/config-service",
+            "DEBUG": "False",
             "HADES_URL": "http://hades",
-            "HERMES_BLOB_STORAGE_CONTAINER": f"{namespace}-hermes-media",
-            "HERMES_CUSTOM_DOMAIN": "https://api.gb.bink.com/",
-            "HERMES_DEBUG": "False",
-            "HERMES_SENTRY_DSN": "https://40ec46dd6a8940c4882501427e3e3a66@o503751.ingest.sentry.io/5589266",
-            "HERMES_SENTRY_ENV": "ait",
-            "METIS_URL": "http://metis",
-            "MIDAS_URL": "http://midas",
-            "NO_AZURE_STORAGE": "False",
-            "SECURE_COOKIES": "True",
-            "SPREEDLY_BASE_URL": "http://pelops/spreedly",
-            "HERMES_BLOB_STORAGE_DSN": get_secret_value("azure-storage", "blob_connection_string_primary"),
-            "HERMES_DATABASE_URL": "postgres://postgres:5432/hermes",
+            "HERMES_URL": "http://hermes",
+            "ITSU_VOUCHER_OFFER_ID": "23",
+            "NEW_ICELAND_AGENT_ACTIVE": "True",
+            "SENTRY_DSN": "https://846029dbfccb4f55ada16a7574dcc20b@o503751.ingest.sentry.io/5610025",
+            "SENTRY_ENV": "ait",
+            "POSTGRES_DSN": "postgres://postgres:5432/midas",
             "VAULT_URL": get_secret_value("azure-keyvault", "url"),
-            "RABBIT_DSN": "amqp://guest:guest@rabbitmq:5672/",
+            "AMQP_DSN": "amqp://rabbitmq:5672/",
             "REDIS_URL": "redis://redis:6379/0",
         }
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
             "annotations": {
-                "azure.workload.identity/client-id": get_secret_value("azure-identities", "hermes_client_id"),
+                "azure.workload.identity/client-id": get_secret_value("azure-identities", "midas_client_id"),
             },
             "metadata": {
                 "name": self.name,
@@ -70,12 +64,6 @@ class Hermes:
             },
             "spec": {
                 "template": {
-                    "metadata": {
-                        "labels": self.labels | {"azure.workload.identity/use": "true"},
-                        "annotations": {
-                            "kubectl.kubernetes.io/default-container": self.name,
-                        },
-                    },
                     "spec": {
                         "nodeSelector": {
                             "kubernetes.azure.com/scalesetpriority": "spot",
@@ -86,20 +74,16 @@ class Hermes:
                             "value": "spot",
                             "effect": "NoSchedule",
                         }],
+                        "containers": [{
+                            "name": "migrator",
+                            "image": self.image,
+                            "command": ["linkerd-await", "--shutdown", "--"],
+                            "args": ["alembic", "upgrade", "head"],
+                            "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                        }],
+                        "restartPolicy": "Never",
                         "serviceAccountName": self.name,
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
-                        "containers": [
-                            {
-                                "name": self.name,
-                                "image": self.image,
-                                "env": [
-                                    {"name": k, "value": v}
-                                    for k, v in self.env.items()
-                                ],
-                                "command": ["linkerd-await", "--shutdown", "--"],
-                                "args": ["python", "manage.py", "migrate"],
-                            },
-                        ],
                     },
                 },
             },
@@ -121,7 +105,7 @@ class Hermes:
                     "metadata": {
                         "labels": self.labels | {"azure.workload.identity/use": "true"},
                         "annotations": {
-                            "kubectl.kubernetes.io/default-container": "api",
+                            "kubectl.kubernetes.io/default-container": "midas",
                         },
                     },
                     "spec": {
@@ -138,64 +122,43 @@ class Hermes:
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         "containers": [
                             {
-                                "name": "api",
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "name": "midas",
                                 "image": self.image,
-                                "command": ["/app/entrypoint.sh"],
-                                "args": [
-                                    "gunicorn",
-                                    "--workers=2",
-                                    "--error-logfile=-",
-                                    "--access-logfile=-",
-                                    "--bind=0.0.0.0:9000",
-                                    "hermes.wsgi",
-                                ],
+                                "imagePullPolicy": "Always",
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "ports": [{"containerPort": 9000}],
                             },
                             {
-                                "name": "celery",
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
-                                "image": self.image,
-                                "command": ["linkerd-await", "--"],
-                                "args": [
-                                    "celery",
-                                    "-A",
-                                    "hermes",
-                                    "worker",
-                                    "--without-gossip",
-                                    "--without-mingle",
-                                    "--loglevel=info",
-                                    "--pool=prefork",
-                                    "--concurrency=2",
-                                    "--queues=ubiquity-async-midas,record-history",
-                                    "--events",
-                                ],
-                            },
-                            {
                                 "name": "beat",
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "image": self.image,
+                                "imagePullPolicy": "Always",
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "command": ["linkerd-await", "--"],
-                                "args": [
-                                    "celery",
-                                    "-A",
-                                    "hermes",
-                                    "beat",
-                                    "--schedule",
-                                    "/tmp/beat",
-                                    "--pidfile",
-                                    "/tmp/beat.pid",
-                                ],
+                                "args": ["celery", "-A", "app.api.celery", "beat", "--schedule", "/tmp/beat", "--pidfile", "/tmp/beat.pid"],
                             },
                             {
-                                "name": "logic",
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "name": "celery",
                                 "image": self.image,
+                                "imagePullPolicy": "Always",
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "command": ["linkerd-await", "--"],
-                                "args": [
-                                    "python",
-                                    "api_messaging/run.py",
-                                ],
+                                "args": ["celery", "-A", "app.api.celery", "worker", "--without-gossip", "--without-mingle", "--loglevel=info", "--pool=solo"],
+                            },
+                            {
+                                "name": "consumer",
+                                "image": self.image,
+                                "imagePullPolicy": "Always",
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "command": ["linkerd-await", "--"],
+                                "args": ["python", "consumer.py"],
+                            },
+                            {
+                                "name": "worker",
+                                "image": self.image,
+                                "imagePullPolicy": "Always",
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "command": ["linkerd-await", "--"],
+                                "args": ["python", "retry_worker.py"],
                             },
                             {
                                 "name": "pushgateway",
@@ -215,6 +178,6 @@ class Hermes:
             },
         })
 
-    def everything(self) -> tuple[ServiceAccount, Service, Job, Deployment]:
+    def everything(self) -> tuple(ServiceAccount, Service, Job, Deployment):
         """Return all deployable objects as a tuple."""
         return (self.serviceaccount, self.service, self.migrator, self.deployment)

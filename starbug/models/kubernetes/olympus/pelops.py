@@ -1,16 +1,21 @@
-"""Initialize the Redis class."""
+"""Defines a Pelops Instance."""
+
 from kr8s.objects import Deployment, Service, ServiceAccount
 
 
-class Redis:
-    """Define a Redis Instance."""
+class Pelops:
+    """Defines a Pelops Instance."""
 
     def __init__(self, namespace: str, image: str | None = None) -> None:
-        """Initialize the Redis class."""
+        """Initialize the Pelops class."""
         self.namespace = namespace
-        self.image = image or "docker.io/redis:6"
-        self.name = "redis"
-        self.labels = {"app": "redis"}
+        self.name = "pelops"
+        self.image = image or "binkcore.azurecr.io/pelops:prod"
+        self.labels = {"app": "pelops"}
+        self.env = {
+            "PELOPS_DEBUG": "False",
+            "REDIS_DSN": "redis://redis:6379/0",
+        }
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
@@ -28,7 +33,7 @@ class Redis:
                 "labels": self.labels,
             },
             "spec": {
-                "ports": [{"port": 6379, "targetPort": 6379}],
+                "ports": [{"port": 80, "targetPort": 9000}],
                 "selector": self.labels,
             },
         })
@@ -49,7 +54,7 @@ class Redis:
                     "metadata": {
                         "labels": self.labels,
                         "annotations": {
-                            "kubectl.kubernetes.io/default-container": "redis",
+                            "kubectl.kubernetes.io/default-container": self.name,
                         },
                     },
                     "spec": {
@@ -63,18 +68,16 @@ class Redis:
                             "effect": "NoSchedule",
                         }],
                         "serviceAccountName": self.name,
+                        "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         "containers": [
                             {
-                                "name": "redis",
+                                "name": self.name,
                                 "image": self.image,
-                                "ports": [{"containerPort": 6379}],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "ports": [{"containerPort": 9000}],
                             },
                         ],
                     },
                 },
             },
         })
-
-    def everything(self) -> tuple[ServiceAccount, Service, Deployment]:
-        """Return all deployable objects as a tuple."""
-        return (self.serviceaccount, self.service, self.deployment)

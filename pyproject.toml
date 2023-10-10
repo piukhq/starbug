@@ -49,5 +49,5 @@ line-length = 120
 
 [tool.ruff]
 select = ["ALL"]
-ignore = ["D203", "D213", "D407", "ANN101", "PLR0913", "PERF203", "S311"]
+ignore = ["ANN101", "D203", "D213", "D407", "PERF203", "PLR0913", "S108", "S311"]
 line-length = 250

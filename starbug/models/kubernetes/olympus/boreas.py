@@ -1,19 +1,30 @@
-"""Initialize the Redis class."""
+"""Defines a Boreas Instance."""
+
 from kr8s.objects import Deployment, Service, ServiceAccount
 
+from starbug.logic.secrets import get_secret_value
 
-class Redis:
-    """Define a Redis Instance."""
+
+class Boreas:
+    """Defines a Boreas Instance."""
 
     def __init__(self, namespace: str, image: str | None = None) -> None:
-        """Initialize the Redis class."""
+        """Initialize the Boreas class."""
         self.namespace = namespace
-        self.image = image or "docker.io/redis:6"
-        self.name = "redis"
-        self.labels = {"app": "redis"}
+        self.name = "boreas"
+        self.image = image or "binkcore.azurecr.io/boreas:prod"
+        self.labels = {"app": "boreas"}
+        self.env = {
+            "DEBUG": "False",
+            "RABBITMQ_DSN": "amqp://guest:guest@rabbitmq:5672/",
+            "KEYVAULT_URL": get_secret_value("azure-keyvault", "url"),
+        }
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
+            "annotations": {
+                "azure.workload.identity/client-id": get_secret_value("azure-identities", "boreas_client_id"),
+            },
             "metadata": {
                 "name": self.name,
                 "namespace": self.namespace,
@@ -28,7 +39,7 @@ class Redis:
                 "labels": self.labels,
             },
             "spec": {
-                "ports": [{"port": 6379, "targetPort": 6379}],
+                "ports": [{"port": 80, "targetPort": 9000}],
                 "selector": self.labels,
             },
         })
@@ -49,7 +60,7 @@ class Redis:
                     "metadata": {
                         "labels": self.labels,
                         "annotations": {
-                            "kubectl.kubernetes.io/default-container": "redis",
+                            "kubectl.kubernetes.io/default-container": self.name,
                         },
                     },
                     "spec": {
@@ -63,11 +74,13 @@ class Redis:
                             "effect": "NoSchedule",
                         }],
                         "serviceAccountName": self.name,
+                        "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         "containers": [
                             {
-                                "name": "redis",
+                                "name": self.name,
                                 "image": self.image,
-                                "ports": [{"containerPort": 6379}],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "ports": [{"containerPort": 9000}],
                             },
                         ],
                     },
@@ -77,4 +90,4 @@ class Redis:
 
     def everything(self) -> tuple[ServiceAccount, Service, Deployment]:
         """Return all deployable objects as a tuple."""
-        return (self.serviceaccount, self.service, self.deployment)
+        return self.serviceaccount, self.service, self.deployment

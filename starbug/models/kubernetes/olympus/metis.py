@@ -1,34 +1,36 @@
-"""Defines a Angelia instance."""
+"""Defines a Metis Instance."""
 
 from kr8s.objects import Deployment, Service, ServiceAccount
 
 from starbug.logic.secrets import get_secret_value
 
 
-class Angelia:
-    """Define an Angelia Instance."""
+class Metis:
+    """Defines a Metis Instance."""
 
     def __init__(self, namespace: str, image: str | None = None) -> None:
-        """Initialize the Angelia class."""
+        """Initialize the Metis class."""
         self.namespace = namespace
-        self.name = "angelia"
-        self.image = image or "docker.io/angelia:prod"
-        self.labels = {"app": "angelia"}
+        self.name = "metis"
+        self.image = image or "binkcore.azurecr.io/metis:prod"
+        self.labels = {"app": "metis"}
         self.env = {
-            "CUSTOM_DOMAIN": "https://api.gb.bink.com/content/hermes",
-            "PENDING_VOUCHERS_FLAG": "True",
-            "POSTGRES_DSN" : "postgres://postgres:5432/hermes",
-            "RABBIT_DSN": "amqp://rabbitmq:5672/",
-            "REDIS_URL": "redis://redis:6379/0",
-            "VAULT_URL": get_secret_value("azure-keyvault", "url"),
-            "SENTRY_DSN": "https://71a82577c1844361a2c37e8a9e4c553b@o503751.ingest.sentry.io/5962550",
-            "SENTRY_ENVIRONMENT": "ait",
+            "DEBUG": "True",
+            "HERMES_URL": "http://hermes",
+            "METIS_PRE_PRODUCTION": "False",
+            "METIS_TESTING": "False",
+            "SENTRY_DSN": "https://9aeb0741cef34c4ebce7e560c56cac2c@o503751.ingest.sentry.io/5610024",
+            "SENTRY_ENV": "ait",
+            "SPREEDLY_BASE_URL": "http://pelops/spreedly",
+            "STUBBED_VOP_URL": "http://pelops",
+            "AZURE_VAULT_URL": get_secret_value("azure-keyvault", "url"),
+            "AMQP_URL": "amqp://rabbitmq:5672/",
         }
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
             "annotations": {
-                "azure.workload.identity/client-id": get_secret_value("azure-identities", "angelia_client_id"),
+                "azure.workload.identity/client-id": get_secret_value("azure-identities", "metis_client_id"),
             },
             "metadata": {
                 "name": self.name,
@@ -65,7 +67,7 @@ class Angelia:
                     "metadata": {
                         "labels": self.labels | {"azure.workload.identity/use": "true"},
                         "annotations": {
-                            "kubectl.kubernetes.io/default-container": "angelia",
+                            "kubectl.kubernetes.io/default-container": self.name,
                         },
                     },
                     "spec": {
@@ -82,10 +84,33 @@ class Angelia:
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         "containers": [
                             {
-                                "name": "angelia",
+                                "name": self.name,
                                 "image": self.image,
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()],
-                                "ports": [{"containerPort": 9080}],
+                                "ports": [{"containerPort": 9000}],
+                            },
+                            {
+                                "name": "celery",
+                                "image": self.image,
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "command": ["linkerd-await", "--"],
+                                "args": [
+                                    "celery",
+                                    "-A",
+                                    "metis.tasks",
+                                    "worker",
+                                    "--without-gossip",
+                                    "--without-mingle",
+                                    "--loglevel=info",
+                                    "--pool=solo",
+                                ],
+                            },
+                            {
+                                "name": "pushgateway",
+                                "image": "prom/pushgateway:v1.6.2",
+                                "imagePullPolicy": "IfNotPresent",
+                                "args": [ "--web.listen-address=0.0.0.0:9100" ],
+                                "ports": [{"name": "metrics", "containerPort": 9100}],
                             },
                         ],
                     },

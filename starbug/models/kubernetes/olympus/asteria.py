@@ -1,37 +1,20 @@
-"""Initialize the Redis class."""
-from kr8s.objects import Deployment, Service, ServiceAccount
+"""Defines a Asteria Instance."""
+
+from kr8s.objects import Deployment
 
 
-class Redis:
-    """Define a Redis Instance."""
+class Asteria:
+    """Defines a Asteria Instance."""
 
     def __init__(self, namespace: str, image: str | None = None) -> None:
-        """Initialize the Redis class."""
+        """Initialize the Asteria class."""
         self.namespace = namespace
-        self.image = image or "docker.io/redis:6"
-        self.name = "redis"
-        self.labels = {"app": "redis"}
-        self.serviceaccount = ServiceAccount({
-            "apiVersion": "v1",
-            "kind": "ServiceAccount",
-            "metadata": {
-                "name": self.name,
-                "namespace": self.namespace,
-            },
-        })
-        self.service = Service({
-            "apiVersion": "v1",
-            "kind": "Service",
-            "metadata": {
-                "name": self.name,
-                "namespace": self.namespace,
-                "labels": self.labels,
-            },
-            "spec": {
-                "ports": [{"port": 6379, "targetPort": 6379}],
-                "selector": self.labels,
-            },
-        })
+        self.name = "asteria"
+        self.image = image or "binkcore.azurecr.io/asteria:prod"
+        self.labels = {"app": "asteria"}
+        self.env = {
+            "POSTGRES_DSN": "postgres://postgres:5432/hermes",
+        }
         self.deployment = Deployment({
             "apiVersion": "apps/v1",
             "kind": "Deployment",
@@ -49,7 +32,7 @@ class Redis:
                     "metadata": {
                         "labels": self.labels,
                         "annotations": {
-                            "kubectl.kubernetes.io/default-container": "redis",
+                            "kubectl.kubernetes.io/default-container": self.name,
                         },
                     },
                     "spec": {
@@ -63,11 +46,13 @@ class Redis:
                             "effect": "NoSchedule",
                         }],
                         "serviceAccountName": self.name,
+                        "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         "containers": [
                             {
-                                "name": "redis",
+                                "name": self.name,
                                 "image": self.image,
-                                "ports": [{"containerPort": 6379}],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "ports": [{"containerPort": 9000}],
                             },
                         ],
                     },
@@ -75,6 +60,6 @@ class Redis:
             },
         })
 
-    def everything(self) -> tuple[ServiceAccount, Service, Deployment]:
+    def everything(self) -> tuple[Deployment]:
         """Return all deployable objects as a tuple."""
-        return (self.serviceaccount, self.service, self.deployment)
+        return (self.deployment)

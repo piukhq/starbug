@@ -21,6 +21,6 @@ class BinkCore:
             },
         })
 
-    def obj(self) -> tuple[Secret]:
-        """Iterate over the Kiroshi Instance."""
+    def everything(self) -> tuple[Secret]:
+        """Return all deployable objects as a tuple."""
         return (self.secret)
