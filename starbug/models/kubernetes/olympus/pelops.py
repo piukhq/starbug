@@ -10,7 +10,7 @@ class Pelops:
         """Initialize the Pelops class."""
         self.namespace = namespace
         self.name = "pelops"
-        self.image = image or "binkcore.azurecr.io/pelops:prod"
+        self.image = image or "binkcore.azurecr.io/pelops:latest"
         self.labels = {"app": "pelops"}
         self.env = {
             "PELOPS_DEBUG": "False",
@@ -81,3 +81,7 @@ class Pelops:
                 },
             },
         })
+
+    def complete(self) -> tuple[ServiceAccount, Service, Deployment]:
+        """Return all deployable objects as a tuple."""
+        return (self.serviceaccount, self.service, self.deployment)

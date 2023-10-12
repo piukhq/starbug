@@ -48,7 +48,7 @@ class Kiroshi:
                         },
                     },
                     "spec": {
-                        "restartPolicy": "OnFailure",
+                        "restartPolicy": "Never",
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         "serviceAccountName": self.name,
                         "containers": [

@@ -21,6 +21,6 @@ class BinkCore:
             },
         })
 
-    def everything(self) -> tuple[Secret]:
+    def complete(self) -> tuple[Secret]:
         """Return all deployable objects as a tuple."""
-        return (self.secret)
+        return (self.secret, )

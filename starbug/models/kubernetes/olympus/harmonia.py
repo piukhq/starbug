@@ -16,7 +16,7 @@ class Harmonia:
         self.image = image or "binkcore.azurecr.io/harmonia:prod"
         self.labels = {"app": "harmonia"}
         self.env = {
-            "TXM_POSTGRES_URI": "postgres://postgres:5432/harmonia",
+            "TXM_POSTGRES_URI": "postgresql://postgres@postgres:5432/harmonia",
             "TXM_REDIS_URL": "redis://redis:6379/0",
             "TXM_AMQP_DSN": "amqp://rabbitmq:5672/",
             "TXM_VAULT_URL": get_secret_value("azure-keyvault", "url"),
@@ -25,6 +25,7 @@ class Harmonia:
             "TXM_BLOB_EXPORT_CONTAINER": f"{self.namespace}-harmonia-exports",
             "TXM_BLOB_ARCHIVE_CONTAINER": f"{self.namespace}-harmonia-archives",
             "TXM_BLOB_AUDIT_CONTAINER": f"{self.namespace}-harmonia-atlas",
+            "TXM_API_AUTH_ENABLED": "False",
             "TXM_DEBUG": "False",
             "TXM_LOG_LEVEL": "info",
             "TXM_HERMES_URL": "http://hermes",
@@ -62,10 +63,10 @@ class Harmonia:
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
-            "annotations": {
-                "azure.workload.identity/client-id": get_secret_value("azure-identities", "harmonia_client_id"),
-            },
             "metadata": {
+                "annotations": {
+                    "azure.workload.identity/client-id": get_secret_value("azure-identities", "harmonia_client_id"),
+                },
                 "name": self.name,
                 "namespace": self.namespace,
             },
@@ -97,6 +98,7 @@ class Harmonia:
                             "effect": "NoSchedule",
                         }],
                         "serviceAccountName": self.name,
+                        "restartPolicy": "Never",
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         "containers": [
                             {
@@ -107,7 +109,6 @@ class Harmonia:
                                 "args": ["alembic", "upgrade", "head"],
                             },
                         ],
-                        "restartPolicy": "Never",
                     },
                 },
             },
@@ -159,18 +160,9 @@ class Harmonia:
                                     "-",
                                     "app.api.app:app",
                                 ],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
-                                "volumeMounts": [
-                                    {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "True"},
                                 ],
-                            },
-                            {
-                                "name": "export-agent-iceland-bonus-card",
-                                "image": self.image,
-                                "imagePullPolicy": "Always",
-                                "command": ["linkerd-await", "--"],
-                                "args": ["txexport", "--agent", "iceland-bonus-card", "--no-user-input", "--quiet"],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
                                 ],
@@ -181,7 +173,9 @@ class Harmonia:
                                 "imagePullPolicy": "Always",
                                 "command": ["linkerd-await", "--"],
                                 "args": ["txcore", "export-retry"],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
+                                ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
                                 ],
@@ -194,6 +188,7 @@ class Harmonia:
                                 "args": ["txcore", "worker"],
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
                                     {"name": "TXM_RQ_QUEUES", "value": "export"},
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
@@ -207,6 +202,7 @@ class Harmonia:
                                 "args": ["txcore", "worker"],
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
                                     {"name": "TXM_RQ_QUEUES", "value": "identify"},
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
@@ -218,7 +214,9 @@ class Harmonia:
                                 "imagePullPolicy": "Always",
                                 "command": ["linkerd-await", "--"],
                                 "args": ["tximport", "--agent", "amex-auth", "--no-user-input", "--quiet"],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
+                                ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
                                 ],
@@ -229,7 +227,9 @@ class Harmonia:
                                 "imagePullPolicy": "Always",
                                 "command": ["linkerd-await", "--"],
                                 "args": ["tximport", "--agent", "amex-settlement", "--no-user-input", "--quiet"],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
+                                ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
                                 ],
@@ -240,18 +240,9 @@ class Harmonia:
                                 "imagePullPolicy": "Always",
                                 "command": ["linkerd-await", "--"],
                                 "args": ["tximport", "--agent", "costa", "--no-user-input", "--quiet"],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
-                                "volumeMounts": [
-                                    {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
                                 ],
-                            },
-                            {
-                                "name": "import-agent-iceland-bonus-card",
-                                "image": self.image,
-                                "imagePullPolicy": "Always",
-                                "command": ["linkerd-await", "--"],
-                                "args": ["tximport", "--agent", "iceland-bonus-card", "--no-user-input", "--quiet"],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
                                 ],
@@ -262,7 +253,9 @@ class Harmonia:
                                 "imagePullPolicy": "Always",
                                 "command": ["linkerd-await", "--"],
                                 "args": ["tximport", "--agent", "itsu", "--no-user-input", "--quiet"],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
+                                ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
                                 ],
@@ -275,6 +268,7 @@ class Harmonia:
                                 "args": ["tximport", "--agent", "mastercard-auth", "--no-user-input", "--quiet"],
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
                                     {"name": "TXM_MASTERCARD_TGX2_ENABLED", "value": "true"},
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
@@ -286,7 +280,9 @@ class Harmonia:
                                 "imagePullPolicy": "Always",
                                 "command": ["linkerd-await", "--"],
                                 "args": ["tximport", "--agent", "mastercard-refund", "--no-user-input", "--quiet"],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
+                                ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
                                 ],
@@ -297,7 +293,9 @@ class Harmonia:
                                 "imagePullPolicy": "Always",
                                 "command": ["linkerd-await", "--"],
                                 "args": ["tximport", "--agent", "mastercard-settled", "--no-user-input", "--quiet"],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
+                                ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
                                 ],
@@ -308,7 +306,9 @@ class Harmonia:
                                 "imagePullPolicy": "Always",
                                 "command": ["linkerd-await", "--"],
                                 "args": ["tximport", "--agent", "slim-chickens", "--no-user-input", "--quiet"],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
+                                ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
                                 ],
@@ -319,7 +319,9 @@ class Harmonia:
                                 "imagePullPolicy": "Always",
                                 "command": ["linkerd-await", "--"],
                                 "args": ["tximport", "--agent", "stonegate", "--no-user-input", "--quiet"],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
+                                ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
                                 ],
@@ -330,7 +332,9 @@ class Harmonia:
                                 "imagePullPolicy": "Always",
                                 "command": ["linkerd-await", "--"],
                                 "args": ["tximport", "--agent", "visa-auth", "--no-user-input", "--quiet"],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
+                                ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
                                 ],
@@ -341,7 +345,9 @@ class Harmonia:
                                 "imagePullPolicy": "Always",
                                 "command": ["linkerd-await", "--"],
                                 "args": ["tximport", "--agent", "visa-refund", "--no-user-input", "--quiet"],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
+                                ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
                                 ],
@@ -352,7 +358,9 @@ class Harmonia:
                                 "imagePullPolicy": "Always",
                                 "command": ["linkerd-await", "--"],
                                 "args": ["tximport", "--agent", "visa-settle", "--no-user-input", "--quiet"],
-                                "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                                "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
+                                ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
                                 ],
@@ -365,6 +373,7 @@ class Harmonia:
                                 "args": ["txcore", "worker"],
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
                                     {"name": "TXM_RQ_QUEUES", "value": "import"},
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
@@ -378,6 +387,7 @@ class Harmonia:
                                 "args": ["txcore", "worker"],
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
                                     {"name": "TXM_RQ_QUEUES", "value": "matching"},
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
@@ -391,6 +401,7 @@ class Harmonia:
                                 "args": ["txcore", "worker"],
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
                                     {"name": "TXM_RQ_QUEUES", "value": "matching_slow"},
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
@@ -404,21 +415,10 @@ class Harmonia:
                                 "args": ["txcore", "worker"],
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
                                     {"name": "TXM_RQ_QUEUES", "value": "streaming"},
+                                    {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
-                                ],
-                            },
-                            {
-                                "name": "pushgateway",
-                                "image": "prom/pushgateway:v1.6.2",
-                                "imagePullPolicy": "IfNotPresent",
-                                "args": [ "--web.listen-address=0.0.0.0:9100" ],
-                                "ports": [
-                                    {
-                                        "name": "metrics",
-                                        "containerPort": 9100,
-                                    },
                                 ],
                             },
                         ],
@@ -434,12 +434,18 @@ class Harmonia:
                                     },
                                 },
                             },
+                            # {
+                            #     "name": "shm",
+                            #     "emptyDir": {
+                            #         "medium": "Memory",
+                            #     },
+                            # },
                         ],
                     },
                 },
             },
         })
 
-    def everything(self) -> tuple[ServiceAccount, Job, Deployment, SecretProviderClass]:
+    def complete(self) -> tuple[ServiceAccount, Job, Deployment, SecretProviderClass]:
         """Return all deployable objects as a tuple."""
         return (self.serviceaccount, self.migrator, self.deployment, self.secretproviderclass)

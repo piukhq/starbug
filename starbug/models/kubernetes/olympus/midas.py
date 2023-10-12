@@ -25,7 +25,7 @@ class Midas:
             "NEW_ICELAND_AGENT_ACTIVE": "True",
             "SENTRY_DSN": "https://846029dbfccb4f55ada16a7574dcc20b@o503751.ingest.sentry.io/5610025",
             "SENTRY_ENV": "ait",
-            "POSTGRES_DSN": "postgres://postgres:5432/midas",
+            "POSTGRES_DSN": "postgresql://postgres@postgres:5432/midas",
             "VAULT_URL": get_secret_value("azure-keyvault", "url"),
             "AMQP_DSN": "amqp://rabbitmq:5672/",
             "REDIS_URL": "redis://redis:6379/0",
@@ -33,10 +33,10 @@ class Midas:
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
-            "annotations": {
-                "azure.workload.identity/client-id": get_secret_value("azure-identities", "midas_client_id"),
-            },
             "metadata": {
+                "annotations": {
+                    "azure.workload.identity/client-id": get_secret_value("azure-identities", "midas_client_id"),
+                },
                 "name": self.name,
                 "namespace": self.namespace,
             },
@@ -178,6 +178,6 @@ class Midas:
             },
         })
 
-    def everything(self) -> tuple(ServiceAccount, Service, Job, Deployment):
+    def complete(self) -> tuple[ServiceAccount, Service, Job, Deployment]:
         """Return all deployable objects as a tuple."""
         return (self.serviceaccount, self.service, self.migrator, self.deployment)

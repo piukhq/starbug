@@ -75,6 +75,6 @@ class Redis:
             },
         })
 
-    def everything(self) -> tuple[ServiceAccount, Service, Deployment]:
+    def complete(self) -> tuple[ServiceAccount, Service, Deployment]:
         """Return all deployable objects as a tuple."""
         return (self.serviceaccount, self.service, self.deployment)

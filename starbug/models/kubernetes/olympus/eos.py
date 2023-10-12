@@ -21,17 +21,17 @@ class Eos:
             "AMEX_API_HOST": "https://api.qa2s.americanexpress.com",
             "SENTRY_DSN": "https://dd0b42d40f3f49fdb413f6b4529741bd@o503751.ingest.sentry.io/5639775",
             "SENTRY_ENV": "ait",
-            "EOS_DATABASE_URI": "postgres://postgres:5432/eos",
+            "EOS_DATABASE_URI": "postgresql://postgres@postgres:5432/eos",
             "REDIS_URL": "redis://redis:6379/0",
             "KEY_VAULT": get_secret_value("azure-keyvault", "url"),
         }
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
-            "annotations": {
-                "azure.workload.identity/client-id": get_secret_value("azure-identities", "eos_client_id"),
-            },
             "metadata": {
+                "annotations": {
+                    "azure.workload.identity/client-id": get_secret_value("azure-identities", "eos_client_id"),
+                },
                 "name": self.name,
                 "namespace": self.namespace,
             },
@@ -75,6 +75,7 @@ class Eos:
                             "value": "spot",
                             "effect": "NoSchedule",
                         }],
+                        "restartPolicy": "Never",
                         "serviceAccountName": self.name,
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         "containers": [
@@ -140,6 +141,6 @@ class Eos:
             },
         })
 
-    def everything(self) -> tuple[ServiceAccount, Service, Job, Deployment]:
+    def complete(self) -> tuple[ServiceAccount, Service, Job, Deployment]:
         """Return all deployable objects as a tuple."""
         return (self.serviceaccount, self.service, self.migrator, self.deployment)

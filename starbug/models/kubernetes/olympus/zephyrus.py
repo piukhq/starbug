@@ -29,10 +29,10 @@ class Zephyrus:
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
-            "annotations": {
-                "azure.workload.identity/client-id": get_secret_value("azure-identities", "zephyrus_client_id"),
-            },
             "metadata": {
+                "annotations": {
+                    "azure.workload.identity/client-id": get_secret_value("azure-identities", "zephyrus_client_id"),
+                },
                 "name": self.name,
                 "namespace": self.namespace,
             },
@@ -93,3 +93,7 @@ class Zephyrus:
                 },
             },
         })
+
+    def complete(self) -> tuple[ServiceAccount, Service, Deployment]:
+        """Return all deployable objects as a tuple."""
+        return (self.serviceaccount, self.service, self.deployment)

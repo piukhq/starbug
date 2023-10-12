@@ -83,3 +83,7 @@ class Plutus:
                 },
             },
         })
+
+    def complete(self) -> tuple[ServiceAccount, Deployment]:
+        """Return all deployable objects as a tuple."""
+        return (self.serviceaccount, self.deployment)

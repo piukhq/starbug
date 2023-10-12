@@ -22,10 +22,10 @@ class Boreas:
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
-            "annotations": {
-                "azure.workload.identity/client-id": get_secret_value("azure-identities", "boreas_client_id"),
-            },
             "metadata": {
+                "annotations": {
+                    "azure.workload.identity/client-id": get_secret_value("azure-identities", "boreas_client_id"),
+                },
                 "name": self.name,
                 "namespace": self.namespace,
             },
@@ -88,6 +88,6 @@ class Boreas:
             },
         })
 
-    def everything(self) -> tuple[ServiceAccount, Service, Deployment]:
+    def complete(self) -> tuple[ServiceAccount, Service, Deployment]:
         """Return all deployable objects as a tuple."""
         return self.serviceaccount, self.service, self.deployment

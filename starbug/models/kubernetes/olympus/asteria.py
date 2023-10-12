@@ -1,6 +1,6 @@
 """Defines a Asteria Instance."""
 
-from kr8s.objects import Deployment
+from kr8s.objects import Deployment, ServiceAccount
 
 
 class Asteria:
@@ -10,11 +10,19 @@ class Asteria:
         """Initialize the Asteria class."""
         self.namespace = namespace
         self.name = "asteria"
-        self.image = image or "binkcore.azurecr.io/asteria:prod"
+        self.image = image or "binkcore.azurecr.io/asteria:latest"
         self.labels = {"app": "asteria"}
         self.env = {
-            "POSTGRES_DSN": "postgres://postgres:5432/hermes",
+            "POSTGRES_DSN": "postgresql://postgres@postgres:5432/hermes",
         }
+        self.serviceaccount = ServiceAccount({
+            "apiVersion": "v1",
+            "kind": "ServiceAccount",
+            "metadata": {
+                "name": self.name,
+                "namespace": self.namespace,
+            },
+        })
         self.deployment = Deployment({
             "apiVersion": "apps/v1",
             "kind": "Deployment",
@@ -60,6 +68,6 @@ class Asteria:
             },
         })
 
-    def everything(self) -> tuple[Deployment]:
+    def complete(self) -> tuple[ServiceAccount, Deployment]:
         """Return all deployable objects as a tuple."""
-        return (self.deployment)
+        return (self.serviceaccount, self.deployment)

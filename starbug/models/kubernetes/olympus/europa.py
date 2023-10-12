@@ -18,16 +18,16 @@ class Europa:
             "ENVIRONMENT_ID": "ait",
             "SENTRY_DSN": "https://63978f8a2fc04916bb67ea5e5e2f20ef@o503751.ingest.sentry.io/5778752",
             "TEAMS_WEBHOOK": "https://hellobink.webhook.office.com/webhookb2/bf220ac8-d509-474f-a568-148982784d19@a6e2367a-92ea-4e5a-b565-723830bcc095/IncomingWebhook/097759f226dd4be69a9f8a53d69a2e4f/ff7b6241-3a2d-471f-aa0c-cfefd7ce3a8f",
-            "EUROPA_DATABASE_URI": "postgres://postgres:5432/europa",
+            "EUROPA_DATABASE_URI": "postgresql://postgres@postgres:5432/europa",
             "KEYVAULT_URI": get_secret_value("azure-keyvault", "url"),
         }
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
-            "annotations": {
-                "azure.workload.identity/client-id": get_secret_value("azure-identities", "europa_client_id"),
-            },
             "metadata": {
+                "annotations": {
+                    "azure.workload.identity/client-id": get_secret_value("azure-identities", "europa_client_id"),
+                },
                 "name": self.name,
                 "namespace": self.namespace,
             },
@@ -71,6 +71,7 @@ class Europa:
                             "value": "spot",
                             "effect": "NoSchedule",
                         }],
+                        "restartPolicy": "Never",
                         "serviceAccountName": self.name,
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         "containers": [
@@ -82,7 +83,6 @@ class Europa:
                                 "args": ["python", "manage.py", "migrate"],
                             },
                         ],
-                        "restartPolicy": "Never",
                     },
                 },
             },
@@ -132,6 +132,6 @@ class Europa:
             },
         })
 
-    def everything(self) -> tuple(ServiceAccount, Service, Job, Deployment):
+    def complete(self) -> tuple[ServiceAccount, Service, Job, Deployment]:
         """Return all deployable objects as a tuple."""
         return (self.serviceaccount, self.service, self.migrator, self.deployment)

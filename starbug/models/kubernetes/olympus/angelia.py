@@ -12,12 +12,12 @@ class Angelia:
         """Initialize the Angelia class."""
         self.namespace = namespace
         self.name = "angelia"
-        self.image = image or "docker.io/angelia:prod"
+        self.image = image or "binkcore.azurecr.io/angelia:prod"
         self.labels = {"app": "angelia"}
         self.env = {
             "CUSTOM_DOMAIN": "https://api.gb.bink.com/content/hermes",
             "PENDING_VOUCHERS_FLAG": "True",
-            "POSTGRES_DSN" : "postgres://postgres:5432/hermes",
+            "POSTGRES_DSN" : "postgresql://postgres@postgres:5432/hermes",
             "RABBIT_DSN": "amqp://rabbitmq:5672/",
             "REDIS_URL": "redis://redis:6379/0",
             "VAULT_URL": get_secret_value("azure-keyvault", "url"),
@@ -27,10 +27,10 @@ class Angelia:
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
-            "annotations": {
-                "azure.workload.identity/client-id": get_secret_value("azure-identities", "angelia_client_id"),
-            },
             "metadata": {
+                "annotations": {
+                    "azure.workload.identity/client-id": get_secret_value("azure-identities", "angelia_client_id"),
+                },
                 "name": self.name,
                 "namespace": self.namespace,
             },
@@ -93,6 +93,6 @@ class Angelia:
             },
         })
 
-    def everything(self) -> tuple[ServiceAccount, Service, Deployment]:
+    def complete(self) -> tuple[ServiceAccount, Service, Deployment]:
         """Return all deployable objects as a tuple."""
         return (self.serviceaccount, self.service, self.deployment)

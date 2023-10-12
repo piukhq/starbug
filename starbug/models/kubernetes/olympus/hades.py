@@ -16,7 +16,7 @@ class Hades:
             "HERMES_URL": "http://hermes",
             "SENTRY_DSN": "https://4904faba430f4d92b6dbaac432de0c7e@o503751.ingest.sentry.io/5610000",
             "SENTRY_ENV": "ait",
-            "HADES_DATABASE_URL": "postgres://postgres:5432/hades",
+            "HADES_DATABASE_URL": "postgresql://postgres@postgres:5432/hades",
         }
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
@@ -66,6 +66,7 @@ class Hades:
                             "effect": "NoSchedule",
                         }],
                         "serviceAccountName": self.name,
+                        "restartPolicy": "Never",
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         "containers": [
                             {
@@ -128,6 +129,6 @@ class Hades:
             },
         })
 
-    def everything(self) -> tuple[ServiceAccount, Service, Job, Deployment]:
+    def complete(self) -> tuple[ServiceAccount, Service, Job, Deployment]:
         """Return all deployable objects as a tuple."""
         return (self.serviceaccount, self.service, self.migrator, self.deployment)

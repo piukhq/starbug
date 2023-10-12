@@ -134,6 +134,6 @@ class Postgres:
             },
         })
 
-    def everything(self) -> tuple[ConfigMap, ServiceAccount, Service, Deployment]:
+    def complete(self) -> tuple[ConfigMap, ServiceAccount, Service, Deployment]:
         """Return all deployable objects as a tuple."""
         return (self.configmap, self.serviceaccount, self.service, self.deployment)

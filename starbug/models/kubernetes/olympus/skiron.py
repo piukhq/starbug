@@ -10,7 +10,7 @@ class Skiron:
         """Initialize the Skiron class."""
         self.namespace = namespace
         self.name = "skiron"
-        self.image = image or "binkcore.azurecr.io/skiron:prod"
+        self.image = image or "binkcore.azurecr.io/skiron:latest"
         self.labels = {"app": "skiron"}
         self.env = {
             "AMQP_DSN": "amqp://rabbitmq:5672/",
@@ -58,6 +58,15 @@ class Skiron:
                     "spec": {
                         "serviceAccountName": self.name,
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
+                        "nodeSelector": {
+                            "kubernetes.azure.com/scalesetpriority": "spot",
+                        },
+                        "tolerations": [{
+                            "key": "kubernetes.azure.com/scalesetpriority",
+                            "operator": "Equal",
+                            "value": "spot",
+                            "effect": "NoSchedule",
+                        }],
                         "containers": [{
                             "name": self.name,
                             "image": self.image,
@@ -69,3 +78,7 @@ class Skiron:
                 },
             },
         })
+
+    def complete(self) -> tuple[ServiceAccount, Service, Deployment]:
+        """Return all deployable objects as a tuple."""
+        return (self.serviceaccount, self.service, self.deployment)

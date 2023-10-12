@@ -31,7 +31,7 @@ class Hermes:
             "SECURE_COOKIES": "True",
             "SPREEDLY_BASE_URL": "http://pelops/spreedly",
             "HERMES_BLOB_STORAGE_DSN": get_secret_value("azure-storage", "blob_connection_string_primary"),
-            "HERMES_DATABASE_URL": "postgres://postgres:5432/hermes",
+            "HERMES_DATABASE_URL": "postgresql://postgres@postgres:5432/hermes",
             "VAULT_URL": get_secret_value("azure-keyvault", "url"),
             "RABBIT_DSN": "amqp://guest:guest@rabbitmq:5672/",
             "REDIS_URL": "redis://redis:6379/0",
@@ -39,10 +39,10 @@ class Hermes:
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
             "kind": "ServiceAccount",
-            "annotations": {
-                "azure.workload.identity/client-id": get_secret_value("azure-identities", "hermes_client_id"),
-            },
             "metadata": {
+                "annotations": {
+                    "azure.workload.identity/client-id": get_secret_value("azure-identities", "hermes_client_id"),
+                },
                 "name": self.name,
                 "namespace": self.namespace,
             },
@@ -87,6 +87,7 @@ class Hermes:
                             "effect": "NoSchedule",
                         }],
                         "serviceAccountName": self.name,
+                        "restartPolicy": "Never",
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         "containers": [
                             {
@@ -215,6 +216,6 @@ class Hermes:
             },
         })
 
-    def everything(self) -> tuple[ServiceAccount, Service, Job, Deployment]:
+    def complete(self) -> tuple[ServiceAccount, Service, Job, Deployment]:
         """Return all deployable objects as a tuple."""
         return (self.serviceaccount, self.service, self.migrator, self.deployment)
