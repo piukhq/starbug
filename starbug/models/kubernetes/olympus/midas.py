@@ -1,8 +1,12 @@
 """Defines a Midas Instance."""
 
-from kr8s.objects import Deployment, Job, Service, ServiceAccount
+from kr8s.objects import Deployment, Job, RoleBinding, Service, ServiceAccount
 
 from starbug.logic.secrets import get_secret_value
+from starbug.models.kubernetes import wait_for_migration
+from starbug.models.kubernetes.infrastructure.postgres import wait_for_postgres
+from starbug.models.kubernetes.infrastructure.rabbitmq import wait_for_rabbitmq
+from starbug.models.kubernetes.infrastructure.redis import wait_for_redis
 
 
 class Midas:
@@ -29,6 +33,7 @@ class Midas:
             "VAULT_URL": get_secret_value("azure-keyvault", "url"),
             "AMQP_DSN": "amqp://rabbitmq:5672/",
             "REDIS_URL": "redis://redis:6379/0",
+            "C_FORCE_ROOT": "True", # Remove once https://github.com/binkhq/python/blob/master/Dockerfile#L43 has propigated
         }
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
@@ -40,6 +45,26 @@ class Midas:
                 "name": self.name,
                 "namespace": self.namespace,
             },
+        })
+        self.rolebinding = RoleBinding({
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "kind": "RoleBinding",
+            "metadata": {
+                "name": self.name + "-k8s-wait-for",
+                "namespace": self.namespace,
+            },
+            "roleRef": {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "Role",
+                "name": "k8s-wait-for",
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": self.name,
+                    "namespace": self.namespace,
+                },
+            ],
         })
         self.service = Service({
             "apiVersion": "v1",
@@ -64,6 +89,12 @@ class Midas:
             },
             "spec": {
                 "template": {
+                    "metadata": {
+                        "labels": self.labels | {"azure.workload.identity/use": "true"},
+                        "annotations": {
+                            "kubectl.kubernetes.io/default-container": self.name,
+                        },
+                    },
                     "spec": {
                         "nodeSelector": {
                             "kubernetes.azure.com/scalesetpriority": "spot",
@@ -74,12 +105,21 @@ class Midas:
                             "value": "spot",
                             "effect": "NoSchedule",
                         }],
+                        "initContainers": [wait_for_postgres(), wait_for_rabbitmq(), wait_for_redis()],
                         "containers": [{
-                            "name": "migrator",
+                            "name": self.name,
                             "image": self.image,
                             "command": ["linkerd-await", "--shutdown", "--"],
-                            "args": ["alembic", "upgrade", "head"],
+                            "args": [
+                                "sh",
+                                "-c",
+                                "until alembic upgrade head; do echo 'Retrying'; sleep 2; done;",
+                            ],
                             "env": [{"name": k, "value": v} for k, v in self.env.items()],
+                            "securityContext": {
+                                "runAsGroup": 10000,
+                                "runAsUser": 10000,
+                            },
                         }],
                         "restartPolicy": "Never",
                         "serviceAccountName": self.name,
@@ -105,7 +145,7 @@ class Midas:
                     "metadata": {
                         "labels": self.labels | {"azure.workload.identity/use": "true"},
                         "annotations": {
-                            "kubectl.kubernetes.io/default-container": "midas",
+                            "kubectl.kubernetes.io/default-container": self.name,
                         },
                     },
                     "spec": {
@@ -120,13 +160,23 @@ class Midas:
                         }],
                         "serviceAccountName": self.name,
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
+                        "initContainers": [
+                            wait_for_postgres(),
+                            wait_for_rabbitmq(),
+                            wait_for_redis(),
+                            wait_for_migration(name="midas"),
+                        ],
                         "containers": [
                             {
-                                "name": "midas",
+                                "name": self.name,
                                 "image": self.image,
                                 "imagePullPolicy": "Always",
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "ports": [{"containerPort": 9000}],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "beat",
@@ -135,6 +185,10 @@ class Midas:
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "command": ["linkerd-await", "--"],
                                 "args": ["celery", "-A", "app.api.celery", "beat", "--schedule", "/tmp/beat", "--pidfile", "/tmp/beat.pid"],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "celery",
@@ -143,6 +197,10 @@ class Midas:
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "command": ["linkerd-await", "--"],
                                 "args": ["celery", "-A", "app.api.celery", "worker", "--without-gossip", "--without-mingle", "--loglevel=info", "--pool=solo"],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "consumer",
@@ -151,6 +209,10 @@ class Midas:
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "command": ["linkerd-await", "--"],
                                 "args": ["python", "consumer.py"],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "worker",
@@ -159,18 +221,20 @@ class Midas:
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "command": ["linkerd-await", "--"],
                                 "args": ["python", "retry_worker.py"],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "pushgateway",
                                 "image": "prom/pushgateway:v1.6.2",
                                 "imagePullPolicy": "IfNotPresent",
                                 "args": [ "--web.listen-address=0.0.0.0:9100" ],
-                                "ports": [
-                                    {
-                                        "name": "metrics",
-                                        "containerPort": 9100,
-                                    },
-                                ],
+                                "ports": [{
+                                    "name": "metrics",
+                                    "containerPort": 9100,
+                                }],
                             },
                         ],
                     },
@@ -178,6 +242,6 @@ class Midas:
             },
         })
 
-    def complete(self) -> tuple[ServiceAccount, Service, Job, Deployment]:
+    def complete(self) -> tuple[ServiceAccount, RoleBinding, Service, Job, Deployment]:
         """Return all deployable objects as a tuple."""
-        return (self.serviceaccount, self.service, self.migrator, self.deployment)
+        return (self.serviceaccount, self.rolebinding, self.service, self.migrator, self.deployment)

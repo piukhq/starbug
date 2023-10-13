@@ -1,8 +1,9 @@
 """Defines a Zephyrus Instance."""
 
-from kr8s.objects import Deployment, Service, ServiceAccount
+from kr8s.objects import Deployment, RoleBinding, Service, ServiceAccount
 
 from starbug.logic.secrets import get_secret_value
+from starbug.models.kubernetes.infrastructure.rabbitmq import wait_for_rabbitmq
 
 
 class Zephyrus:
@@ -36,6 +37,26 @@ class Zephyrus:
                 "name": self.name,
                 "namespace": self.namespace,
             },
+        })
+        self.rolebinding = RoleBinding({
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "kind": "RoleBinding",
+            "metadata": {
+                "name": self.name + "-k8s-wait-for",
+                "namespace": self.namespace,
+            },
+            "roleRef": {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "Role",
+                "name": "k8s-wait-for",
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": self.name,
+                    "namespace": self.namespace,
+                },
+            ],
         })
         self.service = Service({
             "apiVersion": "v1",
@@ -81,12 +102,17 @@ class Zephyrus:
                         }],
                         "serviceAccountName": self.name,
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
+                        "initContainers": [wait_for_rabbitmq()],
                         "containers": [
                             {
                                 "name": self.name,
                                 "image": self.image,
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "ports": [{"containerPort": 9000}],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                         ],
                     },
@@ -94,6 +120,6 @@ class Zephyrus:
             },
         })
 
-    def complete(self) -> tuple[ServiceAccount, Service, Deployment]:
+    def complete(self) -> tuple[ServiceAccount, RoleBinding, Service, Deployment]:
         """Return all deployable objects as a tuple."""
-        return (self.serviceaccount, self.service, self.deployment)
+        return (self.serviceaccount, self.rolebinding, self.service, self.deployment)

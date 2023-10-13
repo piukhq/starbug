@@ -1,8 +1,12 @@
 """Defines a Hermes Instance."""
 
-from kr8s.objects import Deployment, Job, Service, ServiceAccount
+from kr8s.objects import Deployment, Job, RoleBinding, Service, ServiceAccount
 
 from starbug.logic.secrets import get_secret_value
+from starbug.models.kubernetes import wait_for_migration
+from starbug.models.kubernetes.infrastructure.postgres import wait_for_postgres
+from starbug.models.kubernetes.infrastructure.rabbitmq import wait_for_rabbitmq
+from starbug.models.kubernetes.infrastructure.redis import wait_for_redis
 
 
 class Hermes:
@@ -35,6 +39,7 @@ class Hermes:
             "VAULT_URL": get_secret_value("azure-keyvault", "url"),
             "RABBIT_DSN": "amqp://guest:guest@rabbitmq:5672/",
             "REDIS_URL": "redis://redis:6379/0",
+            "C_FORCE_ROOT": "True", # Remove once https://github.com/binkhq/python/blob/master/Dockerfile#L43 has propigated
         }
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
@@ -46,6 +51,26 @@ class Hermes:
                 "name": self.name,
                 "namespace": self.namespace,
             },
+        })
+        self.rolebinding = RoleBinding({
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "kind": "RoleBinding",
+            "metadata": {
+                "name": self.name + "-k8s-wait-for",
+                "namespace": self.namespace,
+            },
+            "roleRef": {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "Role",
+                "name": "k8s-wait-for",
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": self.name,
+                    "namespace": self.namespace,
+                },
+            ],
         })
         self.service = Service({
             "apiVersion": "v1",
@@ -89,6 +114,7 @@ class Hermes:
                         "serviceAccountName": self.name,
                         "restartPolicy": "Never",
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
+                        "initContainers": [wait_for_postgres(), wait_for_rabbitmq(), wait_for_redis()],
                         "containers": [
                             {
                                 "name": self.name,
@@ -99,6 +125,10 @@ class Hermes:
                                 ],
                                 "command": ["linkerd-await", "--shutdown", "--"],
                                 "args": ["python", "manage.py", "migrate"],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                         ],
                     },
@@ -137,6 +167,12 @@ class Hermes:
                         }],
                         "serviceAccountName": self.name,
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
+                        "initContainers": [
+                            wait_for_postgres(),
+                            wait_for_rabbitmq(),
+                            wait_for_redis(),
+                            wait_for_migration(name="hermes"),
+                        ],
                         "containers": [
                             {
                                 "name": "api",
@@ -152,6 +188,10 @@ class Hermes:
                                     "hermes.wsgi",
                                 ],
                                 "ports": [{"containerPort": 9000}],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "celery",
@@ -171,6 +211,10 @@ class Hermes:
                                     "--queues=ubiquity-async-midas,record-history",
                                     "--events",
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "beat",
@@ -187,6 +231,10 @@ class Hermes:
                                     "--pidfile",
                                     "/tmp/beat.pid",
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "logic",
@@ -197,6 +245,10 @@ class Hermes:
                                     "python",
                                     "api_messaging/run.py",
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "pushgateway",
@@ -216,6 +268,6 @@ class Hermes:
             },
         })
 
-    def complete(self) -> tuple[ServiceAccount, Service, Job, Deployment]:
+    def complete(self) -> tuple[ServiceAccount, RoleBinding, Service, Job, Deployment]:
         """Return all deployable objects as a tuple."""
-        return (self.serviceaccount, self.service, self.migrator, self.deployment)
+        return (self.serviceaccount, self.rolebinding, self.service, self.migrator, self.deployment)

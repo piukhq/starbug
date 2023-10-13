@@ -1,6 +1,9 @@
 """Defines a Hades Instance."""
 
-from kr8s.objects import Deployment, Job, Service, ServiceAccount
+from kr8s.objects import Deployment, Job, RoleBinding, Service, ServiceAccount
+
+from starbug.models.kubernetes import wait_for_migration
+from starbug.models.kubernetes.infrastructure.postgres import wait_for_postgres
 
 
 class Hades:
@@ -25,6 +28,26 @@ class Hades:
                 "name": self.name,
                 "namespace": self.namespace,
             },
+        })
+        self.rolebinding = RoleBinding({
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "kind": "RoleBinding",
+            "metadata": {
+                "name": self.name + "-k8s-wait-for",
+                "namespace": self.namespace,
+            },
+            "roleRef": {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "Role",
+                "name": "k8s-wait-for",
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": self.name,
+                    "namespace": self.namespace,
+                },
+            ],
         })
         self.service = Service({
             "apiVersion": "v1",
@@ -68,6 +91,7 @@ class Hades:
                         "serviceAccountName": self.name,
                         "restartPolicy": "Never",
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
+                        "initContainers": [wait_for_postgres()],
                         "containers": [
                             {
                                 "name": self.name,
@@ -77,7 +101,15 @@ class Hades:
                                     for k, v in self.env.items()
                                 ],
                                 "command": ["linkerd-await", "--shutdown", "--"],
-                                "args": ["alembic", "upgrade", "head"],
+                                "args": [
+                                    "sh",
+                                    "-c",
+                                    "until alembic upgrade head; do echo 'Retrying'; sleep 2; done;",
+                                ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                         ],
                     },
@@ -116,12 +148,17 @@ class Hades:
                         }],
                         "serviceAccountName": self.name,
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
+                        "initContainers": [wait_for_postgres(), wait_for_migration(name="hades")],
                         "containers": [
                             {
                                 "name": self.name,
                                 "image": self.image,
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "ports": [{"containerPort": 9000}],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                         ],
                     },
@@ -129,6 +166,6 @@ class Hades:
             },
         })
 
-    def complete(self) -> tuple[ServiceAccount, Service, Job, Deployment]:
+    def complete(self) -> tuple[ServiceAccount, RoleBinding, Service, Job, Deployment]:
         """Return all deployable objects as a tuple."""
-        return (self.serviceaccount, self.service, self.migrator, self.deployment)
+        return (self.serviceaccount, self.rolebinding, self.service, self.migrator, self.deployment)

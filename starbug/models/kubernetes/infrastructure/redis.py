@@ -68,6 +68,13 @@ class Redis:
                                 "name": "redis",
                                 "image": self.image,
                                 "ports": [{"containerPort": 6379}],
+                                "readinessProbe": {
+                                    "exec": {
+                                        "command": ["redis-cli", "ping"],
+                                    },
+                                    "initialDelaySeconds": 5,
+                                    "periodSeconds": 10,
+                                },
                             },
                         ],
                     },
@@ -78,3 +85,12 @@ class Redis:
     def complete(self) -> tuple[ServiceAccount, Service, Deployment]:
         """Return all deployable objects as a tuple."""
         return (self.serviceaccount, self.service, self.deployment)
+
+def wait_for_redis() -> dict:
+    """Return a wait-for init container."""
+    return {
+        "name": "wait-for-redis",
+        "image": "ghcr.io/groundnuty/k8s-wait-for:v2.0",
+        "imagePullPolicy": "Always",
+        "args": ["pod", "-lapp=redis"],
+    }

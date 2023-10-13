@@ -5,9 +5,9 @@ from kr8s.objects import ConfigMap, Deployment, Service, ServiceAccount
 class Postgres:
     """Define a Postgres Instance."""
 
-    def __init__(self, namespace: str, image: str | None = None) -> None:
+    def __init__(self, namespace: str | None = None, image: str | None = None) -> None:
         """.Initialize the Postgres class."""
-        self.namespace = namespace
+        self.namespace = namespace or "default"
         self.image = image or "docker.io/postgres:15"
         self.name = "postgres"
         self.labels = {"app": "postgres"}
@@ -111,6 +111,17 @@ class Postgres:
                                 "name": "postgres",
                                 "image": self.image,
                                 "ports": [{"containerPort": 5432}],
+                                "readinessProbe": {
+                                    "exec": {
+                                        "command": [
+                                            "pg_isready",
+                                            "-U",
+                                            "postgres",
+                                        ],
+                                        "initialDelaySeconds": 5,
+                                        "periodSeconds": 10,
+                                    },
+                                },
                                 "env": [
                                     {
                                         "name": "POSTGRES_HOST_AUTH_METHOD",
@@ -137,3 +148,12 @@ class Postgres:
     def complete(self) -> tuple[ConfigMap, ServiceAccount, Service, Deployment]:
         """Return all deployable objects as a tuple."""
         return (self.configmap, self.serviceaccount, self.service, self.deployment)
+
+def wait_for_postgres() -> dict:
+    """Return a wait-for init container."""
+    return {
+        "name": "wait-for-postgres",
+        "image": "ghcr.io/groundnuty/k8s-wait-for:v2.0",
+        "imagePullPolicy": "Always",
+        "args": ["pod", "-lapp=postgres"],
+    }

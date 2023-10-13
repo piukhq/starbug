@@ -68,6 +68,16 @@ class RabbitMQ:
                                 "name": "rabbitmq",
                                 "image": self.image,
                                 "ports": [{"containerPort": 5672}],
+                                "readinessProbe": {
+                                    "exec": {
+                                        "command": [
+                                            "rabbitmqctl",
+                                            "status",
+                                        ],
+                                    },
+                                    "initialDelaySeconds": 5,
+                                    "periodSeconds": 10,
+                                },
                             },
                         ],
                     },
@@ -78,3 +88,12 @@ class RabbitMQ:
     def complete(self) -> tuple[ServiceAccount, Service, Deployment]:
         """Return all deployable objects as a tuple."""
         return (self.serviceaccount, self.service, self.deployment)
+
+def wait_for_rabbitmq() -> dict:
+    """Return a wait-for init container."""
+    return {
+        "name": "wait-for-rabbitmq",
+        "image": "ghcr.io/groundnuty/k8s-wait-for:v2.0",
+        "imagePullPolicy": "Always",
+        "args": ["pod", "-lapp=rabbitmq"],
+    }

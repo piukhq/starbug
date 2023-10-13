@@ -10,6 +10,7 @@ from starbug.models.kubernetes.infrastructure.namespace import Namespace
 from starbug.models.kubernetes.infrastructure.postgres import Postgres
 from starbug.models.kubernetes.infrastructure.rabbitmq import RabbitMQ
 from starbug.models.kubernetes.infrastructure.redis import Redis
+from starbug.models.kubernetes.infrastructure.roles import Roles
 from starbug.models.kubernetes.olympus.angelia import Angelia
 from starbug.models.kubernetes.olympus.asteria import Asteria
 from starbug.models.kubernetes.olympus.boreas import Boreas
@@ -33,8 +34,10 @@ def main() -> None:
 
     modules = []
 
-    namespace_name = f"{word1}-{word2}-{word3}"
+    namespace_name = f"ait-{word1}-{word2}-{word3}"
+    logger.info("Deploying to namespace: {}", namespace_name)
     modules.append(Namespace(name=namespace_name).complete())
+    modules.append(Roles(namespace=namespace_name).complete())
     modules.append(BinkCore(namespace=namespace_name).complete())
     modules.append(Postgres(namespace=namespace_name).complete())
     modules.append(RabbitMQ(namespace=namespace_name).complete())
@@ -59,11 +62,14 @@ def main() -> None:
 
     for module in modules:
         for component in module:
-            logger.info("Deploying: {}, {}", component.name, component.kind)
-            # TODO @cpressland: fix httpx.HTTPStatusError 409 Conflict we get back from k8s occasionally.
-            component.create()
+                try:
+                    logger.info("Deploying: {}, {}", component.name, component.kind)
+                    component.create()
+                except:
+                     continue
 
-
+    input("Press enter to cleanup.")
+    Namespace(name=namespace_name).namespace.delete()
 
 if __name__ == "__main__":
     main()

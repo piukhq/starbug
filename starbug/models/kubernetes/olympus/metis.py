@@ -1,6 +1,6 @@
 """Defines a Metis Instance."""
 
-from kr8s.objects import Deployment, Service, ServiceAccount
+from kr8s.objects import Deployment, RoleBinding, Service, ServiceAccount
 
 from starbug.logic.secrets import get_secret_value
 
@@ -25,6 +25,7 @@ class Metis:
             "STUBBED_VOP_URL": "http://pelops",
             "AZURE_VAULT_URL": get_secret_value("azure-keyvault", "url"),
             "AMQP_URL": "amqp://rabbitmq:5672/",
+            "C_FORCE_ROOT": "True", # Remove once https://github.com/binkhq/python/blob/master/Dockerfile#L43 has propigated
         }
         self.serviceaccount = ServiceAccount({
             "apiVersion": "v1",
@@ -36,6 +37,26 @@ class Metis:
                 "name": self.name,
                 "namespace": self.namespace,
             },
+        })
+        self.rolebinding = RoleBinding({
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "kind": "RoleBinding",
+            "metadata": {
+                "name": self.name + "-k8s-wait-for",
+                "namespace": self.namespace,
+            },
+            "roleRef": {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "Role",
+                "name": "k8s-wait-for",
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": self.name,
+                    "namespace": self.namespace,
+                },
+            ],
         })
         self.service = Service({
             "apiVersion": "v1",
@@ -88,6 +109,10 @@ class Metis:
                                 "image": self.image,
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "ports": [{"containerPort": 9000}],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "celery",
@@ -104,6 +129,10 @@ class Metis:
                                     "--loglevel=info",
                                     "--pool=solo",
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "pushgateway",
@@ -118,6 +147,6 @@ class Metis:
             },
         })
 
-    def complete(self) -> tuple[ServiceAccount, Service, Deployment]:
+    def complete(self) -> tuple[ServiceAccount, RoleBinding, Service, Deployment]:
         """Return all deployable objects as a tuple."""
-        return (self.serviceaccount, self.service, self.deployment)
+        return (self.serviceaccount, self.rolebinding, self.service, self.deployment)

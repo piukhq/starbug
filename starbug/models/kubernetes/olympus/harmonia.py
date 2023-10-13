@@ -1,9 +1,13 @@
 """Defines a Harmonia instance."""
 
-from kr8s.objects import Deployment, Job, ServiceAccount
+from kr8s.objects import Deployment, Job, RoleBinding, ServiceAccount
 
 from starbug.logic.secrets import get_secret_value
+from starbug.models.kubernetes import wait_for_migration
 from starbug.models.kubernetes.custom_resources import SecretProviderClass
+from starbug.models.kubernetes.infrastructure.postgres import wait_for_postgres
+from starbug.models.kubernetes.infrastructure.rabbitmq import wait_for_rabbitmq
+from starbug.models.kubernetes.infrastructure.redis import wait_for_redis
 
 
 class Harmonia:
@@ -71,6 +75,26 @@ class Harmonia:
                 "namespace": self.namespace,
             },
         })
+        self.rolebinding = RoleBinding({
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "kind": "RoleBinding",
+            "metadata": {
+                "name": self.name + "-k8s-wait-for",
+                "namespace": self.namespace,
+            },
+            "roleRef": {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "Role",
+                "name": "k8s-wait-for",
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": self.name,
+                    "namespace": self.namespace,
+                },
+            ],
+        })
         self.migrator = Job({
             "apiVersion": "batch/v1",
             "kind": "Job",
@@ -100,6 +124,7 @@ class Harmonia:
                         "serviceAccountName": self.name,
                         "restartPolicy": "Never",
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
+                        "initContainers": [wait_for_postgres(), wait_for_rabbitmq(), wait_for_redis()],
                         "containers": [
                             {
                                 "name": self.name,
@@ -107,6 +132,10 @@ class Harmonia:
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                 "command": ["linkerd-await", "--shutdown", "--"],
                                 "args": ["alembic", "upgrade", "head"],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                         ],
                     },
@@ -144,6 +173,12 @@ class Harmonia:
                             "effect": "NoSchedule",
                         }],
                         "serviceAccountName": self.name,
+                        "initContainers": [
+                            wait_for_postgres(),
+                            wait_for_rabbitmq(),
+                            wait_for_redis(),
+                            wait_for_migration(name="harmonia"),
+                        ],
                         "containers": [
                             {
                                 "name": "api",
@@ -165,7 +200,13 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "ports": [{"containerPort": 9000}],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "export-retry-worker",
@@ -178,7 +219,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "export-worker",
@@ -192,7 +238,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "identify-worker",
@@ -206,7 +257,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "import-agent-amex-auth",
@@ -219,7 +275,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "import-agent-amex-settlement",
@@ -232,7 +293,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "import-agent-costa",
@@ -245,7 +311,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "import-agent-itsu",
@@ -258,7 +329,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "import-agent-mastercard-auth",
@@ -272,7 +348,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "import-agent-mastercard-refund",
@@ -285,7 +366,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "import-agent-mastercard-settled",
@@ -298,7 +384,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "import-agent-slim-chickens",
@@ -311,7 +402,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "import-agent-stonegate",
@@ -324,7 +420,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "import-agent-visa-auth",
@@ -337,7 +438,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "import-agent-visa-refund",
@@ -350,20 +456,30 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
-                                "name": "import-agent-visa-settle",
+                                "name": "import-agent-visa-settlement",
                                 "image": self.image,
                                 "imagePullPolicy": "Always",
                                 "command": ["linkerd-await", "--"],
-                                "args": ["tximport", "--agent", "visa-settle", "--no-user-input", "--quiet"],
+                                "args": ["tximport", "--agent", "visa-settlement", "--no-user-input", "--quiet"],
                                 "env": [{"name": k, "value": v} for k, v in self.env.items()] + [
                                     {"name": "TXM_PUSH_PROMETHEUS_METRICS", "value": "False"},
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "import-worker",
@@ -377,7 +493,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "matching-worker",
@@ -391,7 +512,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "matching-worker-slow",
@@ -405,7 +531,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                             {
                                 "name": "streaming-worker",
@@ -419,7 +550,12 @@ class Harmonia:
                                 ],
                                 "volumeMounts": [
                                     {"name": "keyvault", "mountPath": "/mnt/secrets-store", "readOnly": True},
+                                    {"name": "shm", "mountPath": "/dev/shm"},
                                 ],
+                                "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                             },
                         ],
                         "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
@@ -434,18 +570,18 @@ class Harmonia:
                                     },
                                 },
                             },
-                            # {
-                            #     "name": "shm",
-                            #     "emptyDir": {
-                            #         "medium": "Memory",
-                            #     },
-                            # },
+                            {
+                                "name": "shm",
+                                "emptyDir": {
+                                    "medium": "Memory",
+                                },
+                            },
                         ],
                     },
                 },
             },
         })
 
-    def complete(self) -> tuple[ServiceAccount, Job, Deployment, SecretProviderClass]:
+    def complete(self) -> tuple[ServiceAccount, RoleBinding, Job, Deployment, SecretProviderClass]:
         """Return all deployable objects as a tuple."""
-        return (self.serviceaccount, self.migrator, self.deployment, self.secretproviderclass)
+        return (self.serviceaccount, self.rolebinding, self.migrator, self.deployment, self.secretproviderclass)

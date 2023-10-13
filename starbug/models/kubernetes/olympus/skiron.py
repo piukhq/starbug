@@ -1,6 +1,8 @@
 """Defines a Skiron Instance."""
 
-from kr8s.objects import Deployment, Service, ServiceAccount
+from kr8s.objects import Deployment, RoleBinding, Service, ServiceAccount
+
+from starbug.models.kubernetes.infrastructure.rabbitmq import wait_for_rabbitmq
 
 
 class Skiron:
@@ -22,6 +24,26 @@ class Skiron:
                 "name": self.name,
                 "namespace": self.namespace,
             },
+        })
+        self.rolebinding = RoleBinding({
+            "apiVersion": "rbac.authorization.k8s.io/v1",
+            "kind": "RoleBinding",
+            "metadata": {
+                "name": self.name + "-k8s-wait-for",
+                "namespace": self.namespace,
+            },
+            "roleRef": {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "Role",
+                "name": "k8s-wait-for",
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": self.name,
+                    "namespace": self.namespace,
+                },
+            ],
         })
         self.service = Service({
             "apiVersion": "v1",
@@ -67,18 +89,23 @@ class Skiron:
                             "value": "spot",
                             "effect": "NoSchedule",
                         }],
+                        "initContainers": [wait_for_rabbitmq()],
                         "containers": [{
                             "name": self.name,
                             "image": self.image,
                             "imagePullPolicy": "Always",
                             "env": [{"name": k, "value": v} for k, v in self.env.items()],
                             "ports": [{"containerPort": 9000}],
+                            "securityContext": {
+                                    "runAsGroup": 10000,
+                                    "runAsUser": 10000,
+                                },
                         }],
                     },
                 },
             },
         })
 
-    def complete(self) -> tuple[ServiceAccount, Service, Deployment]:
+    def complete(self) -> tuple[ServiceAccount, RoleBinding, Service, Deployment]:
         """Return all deployable objects as a tuple."""
-        return (self.serviceaccount, self.service, self.deployment)
+        return (self.serviceaccount, self.rolebinding, self.service, self.deployment)
