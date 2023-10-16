@@ -9,4 +9,5 @@ class Settings(BaseSettings):
     storage_account_dsn: str
     storage_account_container: str
 
+
 settings = Settings()
