@@ -18,11 +18,15 @@ def scutter_container(filename: str) -> dict:
         "image": "binkcore.azurecr.io/starbug:latest",
         "imagePullPolicy": "Always",
         "command": ["linkerd-await", "--shutdown", "--"],
-        "args": ["scutter", "--path", f"/mnt/results/{filename}"],
+        "args": ["scutter"],
         "env": [
             {
                 "name": "STORAGE_ACCOUNT_DSN",
                 "value": get_secret_value("azure-storage", "blob_connection_string_primary"),
+            },
+            {
+                "name": "FILE_PATH",
+                "value": f"/mnt/results/{filename}",
             },
         ],
         "volumeMounts": [{"name": "results", "mountPath": "/mnt/results"}],
