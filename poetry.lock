@@ -749,13 +749,13 @@ six = "*"
 
 [[package]]
 name = "kr8s"
-version = "0.9.1"
+version = "0.9.0"
 description = "A Kubernetes API library"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "kr8s-0.9.1-py3-none-any.whl", hash = "sha256:37619a52b181753e8276ba19c64c0d7131716dbd932b2e1be2349f205f8c071e"},
-    {file = "kr8s-0.9.1.tar.gz", hash = "sha256:7f21470ad4ae3ccc19aaea0cfb8c9d4df8825c3d52f74120f6515ecea29b1cbf"},
+    {file = "kr8s-0.9.0-py3-none-any.whl", hash = "sha256:aa9b98d3944f4e06ffcbd1b9bf38b6c0c70dfcf3e156328ad792f61ae4ea961d"},
+    {file = "kr8s-0.9.0.tar.gz", hash = "sha256:a08f11751587b16f572fac0d2d79cffed55e8957513f7812797b164cd70c6e63"},
 ]
 
 [package.dependencies]
@@ -1702,4 +1702,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "03ec68d10f5591fc96c049df28ea68f1b7de6b3e4b3c59267315fea714b47111"
+content-hash = "4c1ddca52179e71ea1121a9b618220839bb39b028e97feef0773f35daf7b04f8"
