@@ -29,11 +29,12 @@ def post_results(name: str, results: Results) -> dict:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@api.get("/results/{filename}")
-def get_results(filename: str) -> dict:
+@api.get("/results/{namespace}/{filename}")
+def get_results(namespace: str, filename: str) -> dict:
     """Get the results for a test."""
+    blob_name = f"{namespace}/{filename}"
     client = BlobServiceClient.from_connection_string(settings.storage_account_dsn)
-    blob = client.get_blob_client(container=settings.storage_account_container, blob=filename)
+    blob = client.get_blob_client(container=settings.storage_account_container, blob=blob_name)
     stream = BytesIO()
     blob.download_blob().readinto(stream)
     stream.seek(0)
