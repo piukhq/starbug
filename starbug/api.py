@@ -1,34 +1,40 @@
 """API Endpoints for Starbug."""
 
-from fastapi import FastAPI, status
+from io import BytesIO
 
-from starbug.logic.api import create_test, list_test, get_test, delete_test, purge_test
-from starbug.models.api import SpecTest
+from azure.storage.blob import BlobServiceClient
+from fastapi import FastAPI, Response, status
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+
+from starbug.kubernetes.custom.resources import StarbugTest
+from starbug.settings import settings
 
 api = FastAPI()
 
 
-@api.get("/test", status_code=status.HTTP_200_OK)
-def api_list_test() -> list:
-    """Get a list of all tests."""
-    return list_test()
+class Results(BaseModel):
+    """Update the results for a test."""
 
-@api.get("/test/{test_id}", status_code=status.HTTP_200_OK)
-def api_get_test(test_id: str) -> dict:
-    """Get a test."""
-    return get_test(test_id=test_id)
+    filename: str
+    exit_code: int
 
-@api.delete("/test/{test_id}", status_code=status.HTTP_204_NO_CONTENT)
-def api_delete_test(test_id: str) -> None:
-    """Delete a test."""
-    delete_test(test_id=test_id)
 
-@api.delete("/test/{test_id}/purge", status_code=status.HTTP_204_NO_CONTENT)
-def api_purge_test(test_id: str) -> None:
-    """Purge a Test."""
-    purge_test(test_id=test_id)
+@api.post("/results/{name}")
+def post_results(name: str, results: Results) -> dict:
+    """Update the status.results field for a test."""
+    result_url = f"https://starbug.ait.gb.bink.com/results/{results.filename}"
+    test = StarbugTest({"metadata": {"name": name, "namespace": "starbug"}})
+    test.patch({"status": {"results": result_url, "phase": "Completed" if results.exit_code == 0 else "Failed"}})
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-@api.post("/test", status_code=status.HTTP_201_CREATED)
-def post_test(spec: SpecTest) -> dict:
-    """Create a new Test."""
-    return create_test(spec=spec)
+
+@api.get("/results/{filename}")
+def get_results(filename: str) -> dict:
+    """Get the results for a test."""
+    client = BlobServiceClient.from_connection_string(settings.storage_account_dsn)
+    blob = client.get_blob_client(container=settings.storage_account_container, blob=filename)
+    stream = BytesIO()
+    blob.download_blob().readinto(stream)
+    stream.seek(0)
+    return HTMLResponse(content=stream.read(), status_code=status.HTTP_200_OK)

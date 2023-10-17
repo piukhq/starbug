@@ -19,29 +19,24 @@ scutter = "scutter.cli:cli"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.100.0"
-pydantic = "^2.0.2"
-kubernetes = "^26.1.0"
-click = "^8.1.4"
-uvicorn = "^0.22.0"
-requests = "^2.31.0"
-pendulum = "^2.1.2"
-tabulate = "^0.9.0"
-click-aliases = "^1.0.1"
-inotify = "^0.2.10"
-azure-storage-blob = "^12.17.0"
-loguru = "^0.7.2"
+pydantic = "^2.4.2"
 pydantic-settings = "^2.0.3"
-kr8s = "^0.8.17"
-rq = "^1.15.1"
-azure-identity = "^1.14.0"
+fastapi = "^0.103.2"
+kr8s = "^0.9.0"
+click = "^8.1.7"
+click-aliases = "^1.0.2"
+uvicorn = "^0.23.2"
+requests = "^2.31.0"
+loguru = "^0.7.2"
+azure-storage-blob = "^12.18.3"
+azure-identity = "^1.14.1"
 azure-mgmt-msi = "^7.0.0"
-randomname = "^0.2.1"
+pendulum = "^2.1.2"
 
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.0.278"
-black = "^23.7.0"
+ruff = "^0.1.0"
+black = "^23.9.1"
 refurb = "^1.21.0"
 
 [tool.black]
@@ -49,5 +44,5 @@ line-length = 120
 
 [tool.ruff]
 select = ["ALL"]
-ignore = ["ANN101", "D203", "D213", "D407", "PERF203", "PLR0913", "S108", "S311"]
+ignore = ["ANN101", "D203", "D213", "D407", "FA102", "PERF203", "PLR0913", "S108", "S311"]
 line-length = 250

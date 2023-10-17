@@ -1,9 +1,12 @@
 """Module containing the command-line interface for Starbug."""
 
 import click
+import kr8s
 import uvicorn
 from click_aliases import ClickAliasedGroup
-from tabulate import tabulate
+
+from starbug.kubernetes.internal.crd import _starbug_crd
+from starbug.worker import Worker
 
 
 @click.group(cls=ClickAliasedGroup)
@@ -19,24 +22,16 @@ def server(host: str, port: int) -> None:
     uvicorn.run("starbug.api:api", host=host, port=port)
 
 
-@cli.group(name="get", aliases=["g"], cls=ClickAliasedGroup)
-def get() -> None:
-    """Group for the get commands."""
+@cli.command(name="worker", aliases=["w"])
+def worker() -> None:
+    """Start the Starbug worker."""
+    custom_resources = [resource.metadata.name for resource in kr8s.get("customresourcedefinitions")]
+    if "tests.bink.com" not in custom_resources:
+        click.echo("Starbug CRD not found. Creating...")
+        _starbug_crd().create()
+    worker = Worker()
+    worker.get_tests()
 
-@get.command(name="jobs", aliases=["j", "job"])
-def get_jobs() -> None:
-    """Get a list of jobs."""
-    table = [
-        ("abc123", "Pending", "1s"),
-        ("def456", "Running", "1h"),
-        ("ghi789", "Complete", "2d"),
-    ]
-    click.echo(tabulate(table, headers=["Name", "Status", "Age"], tablefmt="plain"))
-
-@get.command(name="results", aliases=["r", "result"])
-def get_results() -> None:
-    """Get the results for a specific job."""
-    click.echo("Results for job abc123")
 
 if __name__ == "__main__":
     cli()

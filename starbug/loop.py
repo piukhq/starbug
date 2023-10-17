@@ -1,42 +1,80 @@
-"""Simply Loop Utility to sanity check progress."""
-from starbug.kube.list import List
-from starbug.kube.namespace import Namespace
-from starbug.kube.utils import JobTimeoutError, await_kube_job, create_kube_object, delete_kube_namespace
-from starbug.templates.devops.kiroshi import Kiroshi
-from starbug.templates.essential.binkcore import Binkcore
-from starbug.templates.essential.bootstrapdb import BootstrapDB
-from starbug.templates.essential.postgres import Postgres
-from starbug.templates.essential.rabbitmq import RabbitMQ
-from starbug.templates.essential.redis import Redis
-from starbug.templates.tests.kiroshi import TestComponentKiroshi
+"""Test loop, deploys all of Infra + Olympus.
 
-try:
-    namespace = Namespace()
-    binkcore = Binkcore(namespace=namespace.metadata.name)
-    postgres = Postgres(namespace=namespace.metadata.name)
-    rabbitmq = RabbitMQ(namespace=namespace.metadata.name)
-    redis = Redis(namespace=namespace.metadata.name)
-    bootstrap_db = BootstrapDB(namespace=namespace.metadata.name)
-    kiroshi = Kiroshi(namespace=namespace.metadata.name)
-    test_kiroshi = TestComponentKiroshi(namespace=namespace.metadata.name)
-    deployment = List(
-        items=[
-            namespace,
-            *binkcore,
-            *postgres,
-            *bootstrap_db,
-            *rabbitmq,
-            *redis,
-            *kiroshi,
-            *test_kiroshi,
-        ],
-    )
-    create_kube_object(deployment.model_dump(by_alias=True))
-    print(namespace.metadata.name)
-    # await_kube_job(namespace=namespace.metadata.name, labels=bootstrap_db.job.metadata.labels)
-except JobTimeoutError:
-    print("Timeout, killing tests")
-    delete_kube_namespace(namespace=namespace.metadata.name)
-finally:
-    input("Press Enter to kill tests...")
-    delete_kube_namespace(namespace=namespace.metadata.name)
+This is being kept around as a testing tool for the moment, it will be removed later on.
+"""
+
+from random import choice
+
+from loguru import logger
+
+from starbug.azure import AzureOIDC
+from starbug.kubernetes.infrastructure.imagepullsecret import BinkCore
+from starbug.kubernetes.infrastructure.namespace import Namespace
+from starbug.kubernetes.infrastructure.postgres import Postgres
+from starbug.kubernetes.infrastructure.rabbitmq import RabbitMQ
+from starbug.kubernetes.infrastructure.redis import Redis
+from starbug.kubernetes.infrastructure.roles import Roles
+from starbug.kubernetes.olympus.angelia import Angelia
+from starbug.kubernetes.olympus.asteria import Asteria
+from starbug.kubernetes.olympus.boreas import Boreas
+from starbug.kubernetes.olympus.eos import Eos
+from starbug.kubernetes.olympus.europa import Europa
+from starbug.kubernetes.olympus.hades import Hades
+from starbug.kubernetes.olympus.harmonia import Harmonia
+from starbug.kubernetes.olympus.hermes import Hermes
+from starbug.kubernetes.olympus.metis import Metis
+from starbug.kubernetes.olympus.midas import Midas
+from starbug.kubernetes.olympus.pelops import Pelops
+from starbug.kubernetes.olympus.plutus import Plutus
+from starbug.kubernetes.olympus.skiron import Skiron
+from starbug.kubernetes.olympus.zephyrus import Zephyrus
+
+
+def main() -> None:
+    """Test loop, deploys all Infra + Olympus."""
+    word1 = choice(["walking", "running", "jumping", "skipping", "hopping"])
+    word2 = choice(["red", "blue", "green", "yellow", "orange", "purple", "pink"])
+    word3 = choice(["cat", "dog", "bird", "fish", "rabbit", "hamster", "mouse"])
+
+    modules = []
+
+    namespace_name = f"ait-{word1}-{word2}-{word3}"
+    logger.info("Deploying to namespace: {}", namespace_name)
+    modules.append(Namespace(name=namespace_name).complete())
+    modules.append(Roles(namespace=namespace_name).complete())
+    modules.append(BinkCore(namespace=namespace_name).complete())
+    modules.append(Postgres(namespace=namespace_name).complete())
+    modules.append(RabbitMQ(namespace=namespace_name).complete())
+    modules.append(Redis(namespace=namespace_name).complete())
+    modules.append(Angelia(namespace=namespace_name).complete())
+    modules.append(Asteria(namespace=namespace_name).complete())
+    modules.append(Boreas(namespace=namespace_name).complete())
+    modules.append(Eos(namespace=namespace_name).complete())
+    modules.append(Europa(namespace=namespace_name).complete())
+    modules.append(Hades(namespace=namespace_name).complete())
+    modules.append(Harmonia(namespace=namespace_name).complete())
+    modules.append(Hermes(namespace=namespace_name).complete())
+    modules.append(Metis(namespace=namespace_name).complete())
+    modules.append(Midas(namespace=namespace_name).complete())
+    modules.append(Pelops(namespace=namespace_name).complete())
+    modules.append(Plutus(namespace=namespace_name).complete())
+    modules.append(Skiron(namespace=namespace_name).complete())
+    modules.append(Zephyrus(namespace=namespace_name).complete())
+
+    AzureOIDC().cleanup_federated_credentials()
+    AzureOIDC(namespace=namespace_name).setup_federated_credentials()
+
+    for module in modules:
+        for component in module:
+            try:
+                logger.info("Deploying: {}, {}", component.name, component.kind)
+                component.create()
+            except:  # noqa: E722, S112
+                continue
+
+    input("Press enter to cleanup.")
+    Namespace(name=namespace_name).namespace.delete()
+
+
+if __name__ == "__main__":
+    main()

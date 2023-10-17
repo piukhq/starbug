@@ -1,20 +1,17 @@
 """Settings for the Starbug application."""
 
-from typing import Annotated, ClassVar
+from typing import ClassVar
 from uuid import UUID
 
-from pydantic import HttpUrl, PlainValidator, PostgresDsn
+from pydantic import HttpUrl
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Settings for the Starbug application."""
+    """Settings for the scutter application."""
 
-    database_dsn: Annotated[
-        str,
-        PlainValidator(lambda value: PostgresDsn(value).unicode_string()),
-    ] = "postgresql+psycopg://postgres@localhost:5432/postgres"
-    redis_dsn: str = "redis://localhost:6379/0"
+    storage_account_dsn: str
+    storage_account_container: str = "cptest"
 
 
 settings = Settings()
