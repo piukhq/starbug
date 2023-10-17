@@ -1,0 +1,12 @@
+apiVersion: bink.com/v1
+kind: StarbugTest
+metadata:
+  name: ait-big-gray-rabbit
+  namespace: starbug
+spec:
+  infrastructure:
+    - name: postgres
+  applications:
+    - name: kiroshi
+  test:
+    name: kiroshi

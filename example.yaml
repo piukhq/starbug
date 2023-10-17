@@ -1,0 +1,15 @@
+apiVersion: bink.com/v1
+kind: StarbugTest
+metadata:
+  name: ait-big-black-rabbit
+  namespace: starbug
+spec:
+  infrastructure:
+    - name: postgres
+      image: docker.io/postgres:16
+    - name: rabbitmq
+    - name: redis
+  applications:
+    - name: kiroshi
+  test:
+    name: kiroshi

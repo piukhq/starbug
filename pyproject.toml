@@ -10,6 +10,7 @@ authors = ["Chris Pressland <mail@cpressland.io>"]
 license = "MIT"
 readme = "README.md"
 packages = [
+    {include = "./starbug"},
     {include = "./scutter"},
 ]
 
