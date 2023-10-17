@@ -97,10 +97,7 @@ class Worker:
         for module in modules:
             for component in module:
                 logger.info(f"Deploying {component.kind}/{component.name}")
-                try:
-                    component.create()
-                except HTTPStatusError:  # Workaround until: https://github.com/kr8s-org/kr8s/issues/183
-                    continue
+                component.create()
         test.patch({"status": {"phase": "Running"}})
 
     def destroy_test(self, test: StarbugTest) -> None:
