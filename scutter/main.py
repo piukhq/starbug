@@ -20,11 +20,10 @@ if platform == "Darwin":
 class Scutter:
     """Scutter Class."""
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self) -> None:
         """Initialize the Scutter class."""
         self.blob_service_client = BlobServiceClient.from_connection_string(settings.storage_account_dsn)
         self.container_client = self.blob_service_client.get_container_client(settings.storage_account_container)
-        self.path = path
         self.namespace = Path("/var/run/secrets/kubernetes.io/serviceaccount/namespace").read_text()
         self.token = Path("/var/run/secrets/kubernetes.io/serviceaccount/token").read_text()
         self.hostname = Path("/etc/hostname").read_text().strip()
@@ -48,9 +47,9 @@ class Scutter:
             try:
                 if test_container.state.get("terminated"):
                     exit_code = test_container.state.terminated.exitCode
-                    blob_name = f"{self.namespace}/{self.path.name}"
+                    blob_name = f"{self.namespace}/{settings.file_path.name}"
+                    data = settings.file_path.read_bytes()
                     logger.info(f"Uploading file: {blob_name}")
-                    data = self.path.read_bytes()
                     self.container_client.upload_blob(name=blob_name, data=data)
                     logger.info(f"Uploaded file: {blob_name}")
                     results = {"filename": blob_name, "exit_code": exit_code}
