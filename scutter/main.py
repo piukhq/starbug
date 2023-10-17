@@ -42,25 +42,25 @@ class Scutter:
                     timeout=10,
                 ).json(),
             )
-            test_container = [container for container in pod.status.containerStatuses if container.name == "test"][
+            test_container = [container for container in pod.status.containerStatuses if container.name == "test"][  # noqa: RUF015
                 0
-            ]  # noqa: RUF015
-            if test_container.state.get("terminated") and self.path.exists():
-                exit_code = test_container.state.terminated.exitCode
-                blob_name = f"{self.namespace}/{self.path.name}"
-                logger.info(f"Uploading file: {blob_name}")
-                data = self.path.read_bytes()
-                self.container_client.upload_blob(name=blob_name, data=data)
-                logger.info(f"Uploaded file: {blob_name}")
-                results = {"filename": blob_name, "exit_code": exit_code}
-                logger.info(f"Informing Starbug of results: {results}")
-                requests.post(self.results_url, json=results, timeout=10)
-                break
-            if test_container.state.get("terminated") and not self.path.exists():
-                logger.info("Test container finished, but the file does not exist.")
-                exit_code = test_container.state.terminated.exitCode
-                results = {"filename": "None", "exit_code": exit_code}
-                requests.post(self.results_url, json=results, timeout=10)
-                break
+            ]
+            try:
+                if test_container.state.get("terminated"):
+                    exit_code = test_container.state.terminated.exitCode
+                    blob_name = f"{self.namespace}/{self.path.name}"
+                    logger.info(f"Uploading file: {blob_name}")
+                    data = self.path.read_bytes()
+                    self.container_client.upload_blob(name=blob_name, data=data)
+                    logger.info(f"Uploaded file: {blob_name}")
+                    results = {"filename": blob_name, "exit_code": exit_code}
+                    logger.info(f"Informing Starbug of results: {results}")
+                    requests.post(self.results_url, json=results, timeout=10)
+                    break
+            except FileNotFoundError:
+                    logger.info("Test container finished, but the file does not exist.")
+                    results = {"filename": "None", "exit_code": exit_code}
+                    requests.post(self.results_url, json=results, timeout=10)
+                    break
             logger.info("Pod not finished yet, waiting for 10 seconds.")
             sleep(10)
