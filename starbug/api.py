@@ -2,17 +2,15 @@
 
 from io import BytesIO
 
+import kr8s
 from azure.storage.blob import BlobServiceClient
 from fastapi import FastAPI, Response, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 from starbug.kubernetes.custom.resources import StarbugTest
-from starbug.settings import settings
-
 from starbug.namegen import generate_name
-
-from starbug.kubernetes.custom.resources import StarbugTest
+from starbug.settings import settings
 
 api = FastAPI()
 
@@ -61,6 +59,26 @@ def create(spec: JobSpec) -> JSONResponse:
         },
     }).create()
     return JSONResponse(content={"name": payload["name"]}, status_code=status.HTTP_201_CREATED)
+
+
+@api.get("/status")
+def get_status(name: str | None = None) -> JSONResponse:
+    """Get the status of either a single or all tests."""
+    if name:
+        try:
+            test = StarbugTest({"metadata": {"name": name, "namespace": "starbug"}})
+            test.refresh()
+            response = {"name": test.name, "status": {"phase": test.status.phase, "results": test.status.results}}
+        except kr8s._exceptions.NotFoundError:  # noqa: SLF001
+            return JSONResponse(content={"error": "Not Found"}, status_code=status.HTTP_404_NOT_FOUND)
+    else:
+        response =  [{
+            "name": test.name,
+            "status": {
+                "phase": test.status.phase,
+                "results": test.status.results,
+            }} for test in kr8s.get("tests", namespace="starbug")]
+    return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
 
 @api.post("/results/{name}")
