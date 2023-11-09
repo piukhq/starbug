@@ -15,11 +15,12 @@ def cli() -> None:
 
 
 @cli.command(name="server", aliases=["s"])
-@click.argument("host", default="127.0.0.1")
-@click.argument("port", default=6502)
-def server(host: str, port: int) -> None:
+@click.option("--host", "-h", default="127.0.0.1")
+@click.option("--port", "-p", default=6502)
+@click.option("--reload", "-r", default=False)
+def server(host: str, port: int, reload: bool) -> None:  # noqa: FBT001
     """Start the Starbug server."""
-    uvicorn.run("starbug.api:api", host=host, port=port)
+    uvicorn.run("starbug.api:api", host=host, port=port, reload=reload)
 
 
 @cli.command(name="worker", aliases=["w"])

@@ -4,7 +4,6 @@ from time import sleep
 
 import kr8s
 import pendulum
-from httpx import HTTPStatusError
 from loguru import logger
 
 from starbug.azure import AzureOIDC

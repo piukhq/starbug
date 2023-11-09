@@ -73,6 +73,17 @@ class Kiroshi:
                             "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "serviceAccountName": self.name,
                             "initContainers": [wait_for_pod("postgres")],
+                            "nodeSelector": {
+                                "kubernetes.azure.com/scalesetpriority": "spot",
+                            },
+                            "tolerations": [
+                                {
+                                    "key": "kubernetes.azure.com/scalesetpriority",
+                                    "operator": "Equal",
+                                    "value": "spot",
+                                    "effect": "NoSchedule",
+                                },
+                            ],
                             "containers": [
                                 {
                                     "name": self.name,
