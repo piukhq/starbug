@@ -9,4 +9,4 @@ COPY --from=build /src/dist/*.whl .
 RUN pip install *.whl && rm *.whl
 
 ENTRYPOINT [ "linkerd-await", "--" ]
-CMD [ "/usr/local/bin/starbug", "api" ]
+CMD [ "/usr/local/bin/starbug", "server" ]
