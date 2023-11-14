@@ -210,6 +210,7 @@ right = [
     "zebra",
 ]
 
+
 def generate_name() -> str:
     """Generate a random name."""
     return f"ait-{choice(left)}-{choice(middle)}-{choice(right)}"

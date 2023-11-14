@@ -48,16 +48,18 @@ class JobSpec(BaseModel):
 def create(spec: JobSpec) -> JSONResponse:
     """Create a test."""
     payload = spec.model_dump(exclude_none=True)
-    StarbugTest({
-        "apiVersion": "bink.com/v1",
-        "kind": "StarbugTest",
-        "metadata": {"name": payload["name"], "namespace": "starbug"},
-        "spec": {
-            "infrastructure": payload["infrastructure"],
-            "applications": payload["applications"],
-            "test": payload["test"],
+    StarbugTest(
+        {
+            "apiVersion": "bink.com/v1",
+            "kind": "StarbugTest",
+            "metadata": {"name": payload["name"], "namespace": "starbug"},
+            "spec": {
+                "infrastructure": payload["infrastructure"],
+                "applications": payload["applications"],
+                "test": payload["test"],
+            },
         },
-    }).create()
+    ).create()
     return JSONResponse(content={"name": payload["name"]}, status_code=status.HTTP_201_CREATED)
 
 
@@ -72,12 +74,16 @@ def get_status(name: str | None = None) -> JSONResponse:
         except kr8s._exceptions.NotFoundError:  # noqa: SLF001
             return JSONResponse(content={"error": "Not Found"}, status_code=status.HTTP_404_NOT_FOUND)
     else:
-        response =  [{
-            "name": test.name,
-            "status": {
-                "phase": test.status.phase,
-                "results": test.status.results,
-            }} for test in kr8s.get("tests", namespace="starbug")]
+        response = [
+            {
+                "name": test.name,
+                "status": {
+                    "phase": test.status.phase,
+                    "results": test.status.results,
+                },
+            }
+            for test in kr8s.get("tests", namespace="starbug")
+        ]
     return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
 

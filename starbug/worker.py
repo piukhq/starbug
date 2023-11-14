@@ -84,15 +84,20 @@ class Worker:
         modules.append(Namespace(namespace_name).deploy())
         modules.append(Roles(namespace_name).deploy())
         modules.append(BinkCore(namespace_name).deploy())
-        for infrastructure in test.spec.infrastructure:
-            name, image = infrastructure.get("name"), infrastructure.get("image")
-            modules.append(self.infrastructure_mapping[name](namespace=namespace_name, image=image).deploy())
-        for application in test.spec.applications:
-            name, image = application.get("name"), application.get("image")
-            modules.append(self.application_mapping[name](namespace=namespace_name, image=image).deploy())
-        test_suite_name = test.spec.test.get("name")
-        test_suite_image = test.spec.test.get("image")
-        modules.append(self.test_mapping[test_suite_name](namespace=namespace_name, image=test_suite_image).deploy())
+        try:
+            for infrastructure in test.spec.infrastructure:
+                name, image = infrastructure.get("name"), infrastructure.get("image")
+                modules.append(self.infrastructure_mapping[name](namespace=namespace_name, image=image).deploy())
+            for application in test.spec.applications:
+                name, image = application.get("name"), application.get("image")
+                modules.append(self.application_mapping[name](namespace=namespace_name, image=image).deploy())
+            test_suite_name = test.spec.test.get("name")
+            test_suite_image = test.spec.test.get("image")
+            modules.append(self.test_mapping[test_suite_name](namespace=namespace_name, image=test_suite_image).deploy())
+        except KeyError:
+            logger.info("Failed to deploy test, destroying.")
+            test.patch({"status": {"phase": "Failed"}})
+            self.destroy_test(test)
         for module in modules:
             for component in module:
                 logger.info(f"Deploying {component.kind}/{component.name}")
