@@ -98,6 +98,7 @@ class Worker:
             logger.info("Failed to deploy test, destroying.")
             test.patch({"status": {"phase": "Failed"}})
             self.destroy_test(test)
+            return
         for module in modules:
             for component in module:
                 logger.info(f"Deploying {component.kind}/{component.name}")
