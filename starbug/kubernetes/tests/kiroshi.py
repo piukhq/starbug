@@ -90,7 +90,6 @@ class TestKiroshi:
                                     "name": "test",
                                     "image": self.image,
                                     "imagePullPolicy": "Always",
-                                    "restartPolicy": "Never",
                                     "command": ["linkerd-await", "--"],
                                     "args": [
                                         "pytest",

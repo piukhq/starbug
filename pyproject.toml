@@ -20,25 +20,24 @@ scutter = "scutter.cli:cli"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pydantic = "^2.4.2"
-pydantic-settings = "^2.0.3"
-fastapi = "^0.103.2"
-click = "^8.1.7"
-click-aliases = "^1.0.2"
-uvicorn = "^0.23.2"
-requests = "^2.31.0"
-loguru = "^0.7.2"
-azure-storage-blob = "^12.18.3"
-azure-identity = "^1.14.1"
-azure-mgmt-msi = "^7.0.0"
-pendulum = "^2.1.2"
-kr8s = "^0.10.0"
+pydantic = "^2"
+pydantic-settings = "^2"
+fastapi = "^0"
+click = "^8"
+click-aliases = "^1"
+uvicorn = "^0"
+requests = "^2"
+loguru = "^0"
+azure-storage-blob = "^12"
+azure-identity = "^1"
+azure-mgmt-msi = "^7"
+pendulum = "^2"
+kr8s = "^0"
 
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.1.0"
-black = "^23.9.1"
-refurb = "^1.21.0"
+ruff = "^0"
+black = "^23"
 
 [tool.black]
 line-length = 120
