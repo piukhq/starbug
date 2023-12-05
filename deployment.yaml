@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels: &id001
+    app: redis
+  name: redis
+  namespace: starbug
+spec:
+  replicas: 1
+  selector:
+    matchLabels: *id001
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: redis
+      labels: *id001
+    spec:
+      containers:
+      - image: docker.io/redis:6
+        name: redis
+        ports:
+        - containerPort: 6379
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      nodeSelector:
+        kubernetes.azure.com/scalesetpriority: spot
+      serviceAccountName: redis
+      tolerations:
+      - effect: NoSchedule
+        key: kubernetes.azure.com/scalesetpriority
+        operator: Equal
+        value: spot

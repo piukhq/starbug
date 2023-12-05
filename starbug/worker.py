@@ -1,8 +1,11 @@
 """Runs tests depending on state changes to the Starbug CRD."""
 
 from time import sleep
-
+import os
+import yaml
 import kr8s
+
+
 import pendulum
 from loguru import logger
 
@@ -124,3 +127,87 @@ class Worker:
                 logger.info(f"Test {namespace_name} has been running for more than two hours, destroying.")
                 test.patch({"status": {"phase": "Failed"}})
                 self.destroy_test(test)
+
+
+    def generate(self, applications:str, infrastructure: str, namespace: str ) -> None:
+
+        """Generate deployment YAML for applications and infrastructure."""
+        for item in applications.split(",") + infrastructure.split(","):
+            print(item)
+            match item:
+                case "kiroshi":
+                    for item in  Kiroshi(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "angelia":
+                    for item in  Angelia(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "asteria":
+                    for item in  Asteria(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "boreas":
+                    for item in  Boreas(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "eos":
+                    for item in  Eos(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "europa":
+                    for item in  Europa(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "hades":
+                    for item in  Hades(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "harmonia":
+                    for item in  Harmonia(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "hermes":
+                    for item in  Hermes(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "metis":
+                    for item in  Metis(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "midas":
+                    for item in  Midas(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "pelops":
+                    for item in  Pelops(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "plutus":
+                    for item in  Plutus(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "skiron":
+                    for item in  Skiron(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "zephyrus":
+                    for item in  Zephyrus(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "postgres":
+                    for item in  Postgres(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "redis":
+                    for item in  Redis(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+                case "rabbitmq":
+                    for item in  RabbitMQ(namespace=namespace).deploy():
+                        deployment = item.raw
+                        print(yaml.dump(item.raw))
+            with open('deployment.yaml', 'w') as file:
+                yaml.dump(deployment, file)
+            os.system("kubectl apply -f deployment.yaml")
+            # os.system("kubectl delete -f deployment.yaml")

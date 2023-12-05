@@ -33,6 +33,14 @@ def worker() -> None:
     worker = Worker()
     worker.get_tests()
 
+@cli.command(name="generate")
+@click.option("--component", "-c", default="kiroshi")
+@click.option("--infrastructure", "-i", default="postgres")
+@click.option("--namespace", "-n", default="starbug")
+def generate(component:str, infrastructure: str, namespace: str ) -> None:
+    """Generate the YAML for a component."""
+    worker = Worker()
+    worker.generate(component, infrastructure, namespace)
 
 if __name__ == "__main__":
     cli()
