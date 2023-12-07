@@ -133,7 +133,6 @@ class Worker:
 
         """Generate deployment YAML for applications and infrastructure."""
         for item in applications.split(",") + infrastructure.split(","):
-            print(item)
             match item:
                 case "kiroshi":
                     for item in  Kiroshi(namespace=namespace).deploy():
