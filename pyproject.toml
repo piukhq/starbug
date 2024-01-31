@@ -32,7 +32,7 @@ azure-storage-blob = "^12"
 azure-identity = "^1"
 azure-mgmt-msi = "^7"
 pendulum = "^2"
-kr8s = "^0"
+kr8s = "^0.13.0"
 
 
 [tool.poetry.group.dev.dependencies]
