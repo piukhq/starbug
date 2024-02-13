@@ -58,17 +58,6 @@ class RabbitMQ:
                             },
                         },
                         "spec": {
-                            "nodeSelector": {
-                                "kubernetes.azure.com/scalesetpriority": "spot",
-                            },
-                            "tolerations": [
-                                {
-                                    "key": "kubernetes.azure.com/scalesetpriority",
-                                    "operator": "Equal",
-                                    "value": "spot",
-                                    "effect": "NoSchedule",
-                                },
-                            ],
                             "serviceAccountName": self.name,
                             "containers": [
                                 {

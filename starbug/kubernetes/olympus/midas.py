@@ -98,17 +98,6 @@ class Midas:
                             },
                         },
                         "spec": {
-                            "nodeSelector": {
-                                "kubernetes.azure.com/scalesetpriority": "spot",
-                            },
-                            "tolerations": [
-                                {
-                                    "key": "kubernetes.azure.com/scalesetpriority",
-                                    "operator": "Equal",
-                                    "value": "spot",
-                                    "effect": "NoSchedule",
-                                },
-                            ],
                             "initContainers": [
                                 wait_for_pod("postgres"),
                                 wait_for_pod("rabbitmq"),
@@ -161,17 +150,6 @@ class Midas:
                             },
                         },
                         "spec": {
-                            "nodeSelector": {
-                                "kubernetes.azure.com/scalesetpriority": "spot",
-                            },
-                            "tolerations": [
-                                {
-                                    "key": "kubernetes.azure.com/scalesetpriority",
-                                    "operator": "Equal",
-                                    "value": "spot",
-                                    "effect": "NoSchedule",
-                                },
-                            ],
                             "serviceAccountName": self.name,
                             "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [

@@ -77,17 +77,6 @@ class Plutus:
                             },
                         },
                         "spec": {
-                            "nodeSelector": {
-                                "kubernetes.azure.com/scalesetpriority": "spot",
-                            },
-                            "tolerations": [
-                                {
-                                    "key": "kubernetes.azure.com/scalesetpriority",
-                                    "operator": "Equal",
-                                    "value": "spot",
-                                    "effect": "NoSchedule",
-                                },
-                            ],
                             "initContainers": [wait_for_pod("rabbitmq"), wait_for_pod("redis")],
                             "containers": [
                                 {

@@ -87,17 +87,6 @@ class Skiron:
                         "spec": {
                             "serviceAccountName": self.name,
                             "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
-                            "nodeSelector": {
-                                "kubernetes.azure.com/scalesetpriority": "spot",
-                            },
-                            "tolerations": [
-                                {
-                                    "key": "kubernetes.azure.com/scalesetpriority",
-                                    "operator": "Equal",
-                                    "value": "spot",
-                                    "effect": "NoSchedule",
-                                },
-                            ],
                             "initContainers": [wait_for_pod("rabbitmq")],
                             "containers": [
                                 {
