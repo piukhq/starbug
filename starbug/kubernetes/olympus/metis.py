@@ -98,17 +98,6 @@ class Metis:
                             },
                         },
                         "spec": {
-                            "nodeSelector": {
-                                "kubernetes.azure.com/scalesetpriority": "spot",
-                            },
-                            "tolerations": [
-                                {
-                                    "key": "kubernetes.azure.com/scalesetpriority",
-                                    "operator": "Equal",
-                                    "value": "spot",
-                                    "effect": "NoSchedule",
-                                },
-                            ],
                             "serviceAccountName": self.name,
                             "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "containers": [
