@@ -21,7 +21,7 @@ class Namespace:
                 "effect": "NoSchedule",
             },
         ]
-        self.node_selector: str = "spot"
+        self.node_selector: str = "kubernetes.azure.com/scalesetpriority=spot"
 
         self.namespace = Ns(
             {
