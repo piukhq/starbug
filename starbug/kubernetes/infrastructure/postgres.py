@@ -34,7 +34,7 @@ class Postgres:
             "thanatos",
             "prefect",
             "kiroshi",
-        ]  # List generated via: az postgres flexible-server db list --server-name uksouth-staging-2o6h --resource-group uksouth-staging | jq .[].name -r
+        ]
         self.configmap = ConfigMap(
             {
                 "apiVersion": "v1",

@@ -93,7 +93,9 @@ class Worker:
                 modules.append(self.application_mapping[name](namespace=namespace_name, image=image).deploy())
             test_suite_name = test.spec.test.get("name")
             test_suite_image = test.spec.test.get("image")
-            modules.append(self.test_mapping[test_suite_name](namespace=namespace_name, image=test_suite_image).deploy())
+            modules.append(
+                self.test_mapping[test_suite_name](namespace=namespace_name, image=test_suite_image).deploy(),
+            )
         except KeyError:
             logger.info("Failed to deploy test, destroying.")
             test.patch({"status": {"phase": "Failed"}})

@@ -1,6 +1,6 @@
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.poetry]
 name = "starbug"
@@ -9,10 +9,7 @@ description = "Test Automation API"
 authors = ["Chris Pressland <mail@cpressland.io>"]
 license = "MIT"
 readme = "README.md"
-packages = [
-    {include = "./starbug"},
-    {include = "./scutter"},
-]
+packages = [{ include = "./starbug" }, { include = "./scutter" }]
 
 [tool.poetry.scripts]
 starbug = "starbug.cli:cli"
@@ -20,29 +17,40 @@ scutter = "scutter.cli:cli"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pydantic = "^2"
-pydantic-settings = "^2"
-fastapi = "^0"
-click = "^8"
-click-aliases = "^1"
-uvicorn = "^0"
-requests = "^2"
-loguru = "^0"
-azure-storage-blob = "^12"
-azure-identity = "^1"
-azure-mgmt-msi = "^7"
-pendulum = "^2"
-kr8s = "^0"
+pydantic = "^2.6.1"
+pydantic-settings = "^2.1.0"
+fastapi = "^0.109.2"
+click = "^8.1.7"
+click-aliases = "^1.0.4"
+uvicorn = "^0.27.1"
+requests = "^2.31.0"
+loguru = "^0.7.2"
+azure-storage-blob = "^12.19.0"
+azure-identity = "^1.15.0"
+azure-mgmt-msi = "^7.0.0"
+pendulum = "^3.0.0"
+kr8s = "^0.13.2"
 
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0"
-black = "^23"
-
-[tool.black]
-line-length = 120
+ruff = "^0.2.1"
 
 [tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
 select = ["ALL"]
-ignore = ["ANN101", "D203", "D213", "D407", "FA102", "PERF203", "PLR0913", "S108", "S311"]
-line-length = 250
+ignore = [
+    "ANN101",
+    "D203",
+    "D213",
+    "D407",
+    "FA102",
+    "PERF203",
+    "PLR0913",
+    "S108",
+    "S311",
+]
+
+[tool.poetry-dynamic-versioning]
+enable = true

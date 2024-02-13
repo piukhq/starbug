@@ -35,7 +35,6 @@ class Hermes:
             "VAULT_URL": get_secret_value("azure-keyvault", "url"),
             "RABBIT_DSN": "amqp://guest:guest@rabbitmq:5672/",
             "REDIS_URL": "redis://redis:6379/0",
-            "C_FORCE_ROOT": "True",  # Remove once https://github.com/binkhq/python/blob/master/Dockerfile#L43 has propigated
         }
         self.serviceaccount = ServiceAccount(
             {
