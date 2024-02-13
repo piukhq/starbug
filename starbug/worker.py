@@ -73,7 +73,6 @@ class Worker:
                     self.destroy_test(test)
                 if test.status.phase == "Running":
                     self.check_running_test(test)
-            logger.info("Sleeping for 10 seconds")
             sleep(10)
 
     def deploy_test(self, test: StarbugTest) -> None:
