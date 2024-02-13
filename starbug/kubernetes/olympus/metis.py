@@ -25,7 +25,6 @@ class Metis:
             "STUBBED_VOP_URL": "http://pelops",
             "AZURE_VAULT_URL": get_secret_value("azure-keyvault", "url"),
             "AMQP_URL": "amqp://rabbitmq:5672/",
-            "C_FORCE_ROOT": "True",  # Remove once https://github.com/binkhq/python/blob/master/Dockerfile#L43 has propigated
         }
         self.serviceaccount = ServiceAccount(
             {

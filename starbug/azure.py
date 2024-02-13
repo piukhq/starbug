@@ -15,6 +15,7 @@ class AzureOIDC:
 
         Args:
             namespace (str | None, optional): The namespace to add to the Managed Identity. Defaults to None.
+
         """
         self.namespace = namespace
         self.resource_group_name = oidc_settings.resource_group_name

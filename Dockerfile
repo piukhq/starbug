@@ -1,12 +1,9 @@
-FROM ghcr.io/binkhq/python:3.11-poetry as build
-WORKDIR /src
-ADD . .
-RUN poetry build
-
 FROM ghcr.io/binkhq/python:3.11
+ARG PIP_INDEX_URL
+ARG APP_NAME
+ARG APP_VERSION
+RUN pip install --no-cache ${APP_NAME}==$(echo ${APP_VERSION} | cut -c 2-)
 WORKDIR /app
-COPY --from=build /src/dist/*.whl .
-RUN pip install *.whl && rm *.whl
 
 ENTRYPOINT [ "linkerd-await", "--" ]
 CMD [ "/usr/local/bin/starbug", "server" ]

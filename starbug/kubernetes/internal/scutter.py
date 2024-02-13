@@ -12,6 +12,7 @@ def scutter_container(filename: str) -> dict:
 
     Args:
         filename (str): The filename to upload to blob storage.
+
     """
     return {
         "name": "scutter",
