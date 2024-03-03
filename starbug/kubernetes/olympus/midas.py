@@ -15,6 +15,7 @@ class Midas:
         self.image = image or "binkcore.azurecr.io/midas:prod"
         self.labels = {"app": "midas"}
         self.env = {
+            "LINKERD_AWAIT_DISABLED": "true",
             "ATLAS_URL": "http://atlas",
             "AZURE_AAD_TENANT_ID": "a6e2367a-92ea-4e5a-b565-723830bcc095",
             "CONFIG_SERVICE_URL": "http://europa/config-service",
@@ -107,7 +108,6 @@ class Midas:
                                 {
                                     "name": self.name,
                                     "image": self.image,
-                                    "command": ["linkerd-await", "--shutdown", "--"],
                                     "args": [
                                         "sh",
                                         "-c",
@@ -122,7 +122,6 @@ class Midas:
                             ],
                             "restartPolicy": "Never",
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         },
                     },
                 },
@@ -151,7 +150,6 @@ class Midas:
                         },
                         "spec": {
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [
                                 wait_for_pod("postgres"),
                                 wait_for_pod("rabbitmq"),
@@ -175,7 +173,6 @@ class Midas:
                                     "image": self.image,
                                     "imagePullPolicy": "Always",
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
-                                    "command": ["linkerd-await", "--"],
                                     "args": [
                                         "celery",
                                         "-A",
@@ -196,7 +193,6 @@ class Midas:
                                     "image": self.image,
                                     "imagePullPolicy": "Always",
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
-                                    "command": ["linkerd-await", "--"],
                                     "args": [
                                         "celery",
                                         "-A",
@@ -217,7 +213,6 @@ class Midas:
                                     "image": self.image,
                                     "imagePullPolicy": "Always",
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
-                                    "command": ["linkerd-await", "--"],
                                     "args": ["python", "consumer.py"],
                                     "securityContext": {
                                         "runAsGroup": 10000,
@@ -229,7 +224,6 @@ class Midas:
                                     "image": self.image,
                                     "imagePullPolicy": "Always",
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
-                                    "command": ["linkerd-await", "--"],
                                     "args": ["python", "retry_worker.py"],
                                     "securityContext": {
                                         "runAsGroup": 10000,

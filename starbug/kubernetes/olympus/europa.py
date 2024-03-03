@@ -15,6 +15,7 @@ class Europa:
         self.image = image or "binkcore.azurecr.io/europa:prod"
         self.labels = {"app": "europa"}
         self.env = {
+            "LINKERD_AWAIT_DISABLED": "true",
             "ENVIRONMENT_ID": "ait",
             "SENTRY_DSN": "https://63978f8a2fc04916bb67ea5e5e2f20ef@o503751.ingest.sentry.io/5778752",
             "TEAMS_WEBHOOK": "https://hellobink.webhook.office.com/webhookb2/bf220ac8-d509-474f-a568-148982784d19@a6e2367a-92ea-4e5a-b565-723830bcc095/IncomingWebhook/097759f226dd4be69a9f8a53d69a2e4f/ff7b6241-3a2d-471f-aa0c-cfefd7ce3a8f",
@@ -91,14 +92,12 @@ class Europa:
                         "spec": {
                             "restartPolicy": "Never",
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [wait_for_pod("postgres")],
                             "containers": [
                                 {
                                     "name": self.name,
                                     "image": self.image,
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
-                                    "command": ["linkerd-await", "--shutdown", "--"],
                                     "args": ["python", "manage.py", "migrate"],
                                     "securityContext": {
                                         "runAsGroup": 10000,
@@ -134,7 +133,6 @@ class Europa:
                         },
                         "spec": {
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [wait_for_pod("postgres"), wait_for_migration("europa")],
                             "containers": [
                                 {

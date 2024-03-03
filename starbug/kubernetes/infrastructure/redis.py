@@ -1,4 +1,5 @@
 """Initialize the Redis class."""
+
 from kr8s.objects import Deployment, Service, ServiceAccount
 
 

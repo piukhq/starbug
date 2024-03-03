@@ -15,6 +15,7 @@ class Skiron:
         self.image = image or "binkcore.azurecr.io/skiron:latest"
         self.labels = {"app": "skiron"}
         self.env = {
+            "LINKERD_AWAIT_DISABLED": "true",
             "AMQP_DSN": "amqp://rabbitmq:5672/",
         }
         self.serviceaccount = ServiceAccount(
@@ -86,7 +87,6 @@ class Skiron:
                         },
                         "spec": {
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [wait_for_pod("rabbitmq")],
                             "containers": [
                                 {

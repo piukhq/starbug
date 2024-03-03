@@ -15,6 +15,7 @@ class Asteria:
         self.image = image or "binkcore.azurecr.io/asteria:latest"
         self.labels = {"app": "asteria"}
         self.env = {
+            "LINKERD_AWAIT_DISABLED": "true",
             "POSTGRES_DSN": "postgresql://postgres@postgres:5432/hermes",
         }
         self.serviceaccount = ServiceAccount(
@@ -72,7 +73,6 @@ class Asteria:
                         },
                         "spec": {
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [
                                 wait_for_pod("postgres"),
                                 wait_for_pod("rabbitmq"),

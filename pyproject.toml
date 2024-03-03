@@ -12,16 +12,14 @@ readme = "README.md"
 packages = [{ include = "./starbug" }, { include = "./scutter" }]
 
 [tool.poetry.scripts]
-starbug = "starbug.cli:cli"
-scutter = "scutter.cli:cli"
+starbug = "starbug:app"
+scutter = "scutter:app"
 
 [tool.poetry.dependencies]
-python = "^3.11"
-pydantic = "^2.6.1"
-pydantic-settings = "^2.1.0"
-fastapi = "^0.109.2"
-click = "^8.1.7"
-click-aliases = "^1.0.4"
+python = "^3.12"
+pydantic = "^2.6.3"
+pydantic-settings = "^2.2.1"
+fastapi = "^0.110.0"
 uvicorn = "^0.27.1"
 requests = "^2.31.0"
 loguru = "^0.7.2"
@@ -29,11 +27,13 @@ azure-storage-blob = "^12.19.0"
 azure-identity = "^1.15.0"
 azure-mgmt-msi = "^7.0.0"
 pendulum = "^3.0.0"
-kr8s = "^0.13.2"
+kr8s = "^0.13.5"
+typer = { extras = ["all"], version = "^0.9.0" }
+pyyaml = "^6.0.1"
 
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.2.1"
+ruff = "^0.3.0"
 
 [tool.ruff]
 line-length = 120

@@ -15,6 +15,7 @@ class Plutus:
         self.image = image or "binkcore.azurecr.io/plutus:prod"
         self.labels = {"app": "plutus"}
         self.env = {
+            "LINKERD_AWAIT_DISABLED": "true",
             "CONSUME_QUEUE": "tx_plutus_dw",
             "DEAD_LETTER_EXCHANGE": "tx_plutus_dl_exchange",
             "DEAD_LETTER_QUEUE": "tx_plutus_dl_queue",
@@ -83,7 +84,6 @@ class Plutus:
                                     "name": "consumer",
                                     "image": self.image,
                                     "imagePullPolicy": "Always",
-                                    "command": ["linkerd-await", "--"],
                                     "args": ["python", "/app/app/message_consumer.py"],
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                     "securityContext": {
@@ -95,7 +95,6 @@ class Plutus:
                                     "name": "dlx",
                                     "image": self.image,
                                     "imagePullPolicy": "Always",
-                                    "command": ["linkerd-await", "--"],
                                     "args": ["python", "/app/app/dead_letter_consumer.py"],
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                     "securityContext": {
@@ -105,7 +104,6 @@ class Plutus:
                                 },
                             ],
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                         },
                     },
                 },

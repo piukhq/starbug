@@ -15,10 +15,8 @@ class Zephyrus:
         self.image = image or "binkcore.azurecr.io/zephyrus:prod"
         self.labels = {"app": "zephyrus"}
         self.env = {
-            "AZURE_CERTIFICATE_FOLDER": "certs",
-            "AZURE_CONTAINER": "dev-zephyrus",
+            "LINKERD_AWAIT_DISABLED": "true",
             "HERMES_URL": "http://hermes",
-            "MASTERCARD_CERTIFICATE_BLOB_NAME": "certificate.pem",
             "SENTRY_DSN": "https://286fc47f67974edc9761b7ae7fc502c2@o503751.ingest.sentry.io/5610043",
             "SENTRY_ENV": "ait",
             "VISA_PASSWORD": "7Taq_e-VY9KU",
@@ -98,7 +96,6 @@ class Zephyrus:
                         },
                         "spec": {
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [wait_for_pod("rabbitmq")],
                             "containers": [
                                 {

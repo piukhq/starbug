@@ -1,4 +1,5 @@
 """Define a Postgres Instance."""
+
 from kr8s.objects import ConfigMap, Deployment, Service, ServiceAccount
 
 
@@ -145,5 +146,5 @@ class Postgres:
         )
 
     def deploy(self) -> tuple[ConfigMap, ServiceAccount, Service, Deployment]:
-        """Return all deployable objects as a tuple."""
+        """Return all deployable objects as a set."""
         return (self.configmap, self.serviceaccount, self.service, self.deployment)

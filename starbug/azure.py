@@ -63,6 +63,8 @@ class AzureOIDC:
                 resource_group_name=self.resource_group_name,
                 resource_name=f"{self.resource_group_name}-{identity}",
             ):
+                if credential.name.startswith(tuple(oidc_settings.ignored_prefixes)):
+                    continue
                 logger.info(f"Removing Federated Identity Credential {credential.name}")
                 self.client.federated_identity_credentials.delete(
                     resource_group_name=self.resource_group_name,

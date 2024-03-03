@@ -5,17 +5,18 @@ from kr8s.objects import Job, Role, RoleBinding, ServiceAccount
 from starbug.kubernetes import get_secret_value, wait_for_pod
 from starbug.kubernetes.internal.scutter import scutter_container, scutter_role, scutter_rolebinding
 
+
 class Pytest:
     """Provides a pytest based test suite."""
 
-    def __init__(self, namespace:str, image:str| None = None) -> None:
+    def __init__(self, namespace: str, image: str | None = None) -> None:
         """Initialize the Pytest Class."""
         self.name = "pytest"
         self.namespace = namespace
         self.image = image or "binkcore.azurecr.io/pyqa-apiv2:latest"
         self.env = {
             "BLOB_STORAGE_ACCOUNT_DSN": get_secret_value("azure-storage", "blob_connection_string_primary"),
-            "HERMES_DATABASE_URI":get_secret_value("azure-postgres", "url_hermes"),
+            "HERMES_DATABASE_URI": get_secret_value("azure-postgres", "url_hermes"),
             "HARMONIA_DATABASE_URI": get_secret_value("azure-postgres", "url_harmonia"),
             "SNOWSTORM_DATABASE_URI": get_secret_value("azure-postgres", "url_snowstorm"),
             "VAULT_URL": get_secret_value("azure-keyvault", "url"),
@@ -64,7 +65,7 @@ class Pytest:
                 "metadata": {
                     "name": self.name,
                     "namespace": self.namespace,
-                    "labels":{
+                    "labels": {
                         "app": self.name,
                     },
                 },
@@ -80,30 +81,17 @@ class Pytest:
                             },
                         },
                         "spec": {
-                            "nodeSelector": {
-                                "kubernetes.azure.com/scalesetpriority": "spot",
-                            },
-                            "tolerations": [
-                                {
-                                    "key": "kubernetes.azure.com/scalesetpriority",
-                                    "operator": "Equal",
-                                    "value": "spot",
-                                    "effect": "NoSchedule",
-                                },
-                            ],
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [wait_for_pod("angelia")],
                             "containers": [
                                 {
                                     "name": self.name,
                                     "image": self.image,
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
-                                    "command": ["linkerd-await", "--"],
                                     "args": [
                                         "pytest",
                                         "--html",
-                                        "/tmp/report.html",
+                                        "/mnt/results/report.html",
                                         "--self-contained-html",
                                         "-m bink_regression_api2 --channel bink --env staging",
                                     ],

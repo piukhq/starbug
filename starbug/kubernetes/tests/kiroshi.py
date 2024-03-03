@@ -72,14 +72,12 @@ class TestKiroshi:
                         },
                         "spec": {
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [wait_for_pod("kiroshi")],
                             "containers": [
                                 {
                                     "name": "test",
                                     "image": self.image,
                                     "imagePullPolicy": "Always",
-                                    "command": ["linkerd-await", "--"],
                                     "args": [
                                         "pytest",
                                         "image_server.py",
