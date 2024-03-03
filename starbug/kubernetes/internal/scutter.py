@@ -18,7 +18,6 @@ def scutter_container(filename: str) -> dict:
         "name": "scutter",
         "image": "binkcore.azurecr.io/starbug:latest",
         "imagePullPolicy": "Always",
-        "command": ["linkerd-await", "--shutdown", "--"],
         "args": ["scutter"],
         "env": [
             {

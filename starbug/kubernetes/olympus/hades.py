@@ -15,6 +15,7 @@ class Hades:
         self.image = image or "binkcore.azurecr.io/hades:prod"
         self.labels = {"app": "hades"}
         self.env = {
+            "LINKERD_AWAIT_DISABLED": "true",
             "HERMES_URL": "http://hermes",
             "SENTRY_DSN": "https://4904faba430f4d92b6dbaac432de0c7e@o503751.ingest.sentry.io/5610000",
             "SENTRY_ENV": "ait",
@@ -87,14 +88,12 @@ class Hades:
                         "spec": {
                             "serviceAccountName": self.name,
                             "restartPolicy": "Never",
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [wait_for_pod("postgres")],
                             "containers": [
                                 {
                                     "name": self.name,
                                     "image": self.image,
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
-                                    "command": ["linkerd-await", "--shutdown", "--"],
                                     "args": [
                                         "sh",
                                         "-c",
@@ -134,7 +133,6 @@ class Hades:
                         },
                         "spec": {
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [wait_for_pod("postgres"), wait_for_migration("hades")],
                             "containers": [
                                 {

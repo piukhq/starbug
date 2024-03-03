@@ -1,4 +1,5 @@
 """Define a RabbitMQ Instance."""
+
 from kr8s.objects import Deployment, Service, ServiceAccount
 
 

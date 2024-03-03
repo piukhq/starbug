@@ -15,6 +15,7 @@ class Hermes:
         self.image = image or "binkcore.azurecr.io/hermes:prod"
         self.labels = {"app": "hermes"}
         self.env = {
+            "LINKERD_AWAIT_DISABLED": "true",
             "ATLAS_URL": "http://atlas/audit",
             "DEFAULT_API_VERSION": "1.1",
             "ENVIRONMENT_COLOR": "#FF69B4",
@@ -106,7 +107,6 @@ class Hermes:
                         "spec": {
                             "serviceAccountName": self.name,
                             "restartPolicy": "Never",
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [
                                 wait_for_pod("postgres"),
                                 wait_for_pod("rabbitmq"),
@@ -117,7 +117,6 @@ class Hermes:
                                     "name": self.name,
                                     "image": self.image,
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
-                                    "command": ["linkerd-await", "--shutdown", "--"],
                                     "args": ["python", "manage.py", "migrate"],
                                     "securityContext": {
                                         "runAsGroup": 10000,
@@ -153,7 +152,6 @@ class Hermes:
                         },
                         "spec": {
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [
                                 wait_for_pod("postgres"),
                                 wait_for_pod("rabbitmq"),
@@ -184,7 +182,6 @@ class Hermes:
                                     "name": "celery",
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                     "image": self.image,
-                                    "command": ["linkerd-await", "--"],
                                     "args": [
                                         "celery",
                                         "-A",
@@ -207,7 +204,6 @@ class Hermes:
                                     "name": "beat",
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                     "image": self.image,
-                                    "command": ["linkerd-await", "--"],
                                     "args": [
                                         "celery",
                                         "-A",
@@ -227,7 +223,6 @@ class Hermes:
                                     "name": "logic",
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                     "image": self.image,
-                                    "command": ["linkerd-await", "--"],
                                     "args": [
                                         "python",
                                         "api_messaging/run.py",

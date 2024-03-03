@@ -9,12 +9,22 @@ import requests
 from azure.storage.blob import BlobServiceClient
 from box import Box
 from loguru import logger
-
-from scutter.settings import settings
+from pydantic_settings import BaseSettings
 
 if platform == "Darwin":
     logger.info("Running this tool on macOS is not supported.")
     sys.exit(0)
+
+
+class Settings(BaseSettings):
+    """Settings for the scutter application."""
+
+    storage_account_dsn: str
+    storage_account_container: str = "results"
+    file_path: Path = Path("/mnt/results/report.html")
+
+
+settings = Settings()
 
 
 class Scutter:
@@ -41,9 +51,7 @@ class Scutter:
                     timeout=10,
                 ).json(),
             )
-            test_container = [container for container in pod.status.containerStatuses if container.name == "test"][  # noqa: RUF015
-                0
-            ]
+            test_container = next([container for container in pod.status.containerStatuses if container.name == "test"])
             try:
                 if test_container.state.get("terminated"):
                     exit_code = test_container.state.terminated.exitCode
@@ -57,9 +65,9 @@ class Scutter:
                     requests.post(self.results_url, json=results, timeout=10)
                     break
             except FileNotFoundError:
-                    logger.info("Test container finished, but the file does not exist.")
-                    results = {"filename": "None", "exit_code": exit_code}
-                    requests.post(self.results_url, json=results, timeout=10)
-                    break
+                logger.info("Test container finished, but the file does not exist.")
+                results = {"filename": "None", "exit_code": exit_code}
+                requests.post(self.results_url, json=results, timeout=10)
+                break
             logger.info("Pod not finished yet, waiting for 10 seconds.")
             sleep(10)

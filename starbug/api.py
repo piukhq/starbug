@@ -44,8 +44,8 @@ class JobSpec(BaseModel):
     test: TestSpec
 
 
-@api.post("/create")
-def create(spec: JobSpec) -> JSONResponse:
+@api.post("/test")
+def post_test(spec: JobSpec) -> JSONResponse:
     """Create a test."""
     payload = spec.model_dump(exclude_none=True)
     StarbugTest(
@@ -63,8 +63,9 @@ def create(spec: JobSpec) -> JSONResponse:
     return JSONResponse(content={"name": payload["name"]}, status_code=status.HTTP_201_CREATED)
 
 
-@api.get("/status")
-def get_status(name: str | None = None) -> JSONResponse:
+@api.get("/test")
+@api.get("/test/{name}")
+def get_test(name: str | None = None) -> JSONResponse:
     """Get the status of either a single or all tests."""
     if name:
         try:
@@ -87,10 +88,18 @@ def get_status(name: str | None = None) -> JSONResponse:
     return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
 
+@api.delete("/test/{name}")
+def delete_test(name: str) -> Response:
+    """Cancel a test."""
+    test = StarbugTest({"metadata": {"name": name, "namespace": "starbug"}})
+    test.patch({"status": {"phase": "Cancelled"}})
+    return Response(status_code=status.HTTP_202_ACCEPTED)
+
+
 @api.post("/results/{name}")
 def post_results(name: str, results: Results) -> Response:
     """Update the status.results field for a test."""
-    result_url = f"https://starbug.ait.gb.bink.com/results/{results.filename}"
+    result_url = f"{settings.results_base_url}/{results.filename}"
     test = StarbugTest({"metadata": {"name": name, "namespace": "starbug"}})
     test.patch({"status": {"results": result_url, "phase": "Completed" if results.exit_code == 0 else "Failed"}})
     return Response(status_code=status.HTTP_204_NO_CONTENT)

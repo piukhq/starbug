@@ -15,6 +15,7 @@ class Pelops:
         self.image = image or "binkcore.azurecr.io/pelops:latest"
         self.labels = {"app": "pelops"}
         self.env = {
+            "LINKERD_AWAIT_DISABLED": "true",
             "PELOPS_DEBUG": "False",
             "REDIS_DSN": "redis://redis:6379/0",
         }
@@ -88,7 +89,6 @@ class Pelops:
                         },
                         "spec": {
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [wait_for_pod("redis")],
                             "containers": [
                                 {

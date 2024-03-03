@@ -15,6 +15,7 @@ class Eos:
         self.image = image or "binkcore.azurecr.io/eos:prod"
         self.labels = {"app": "eos"}
         self.env = {
+            "LINKERD_AWAIT_DISABLED": "true",
             "OAUTH_CLIENT_ID": "bbcb94ca-d25f-4a77-949a-c4a7da6a19f0",
             "OAUTH_CLIENT_SECRET": "7~PF_wKl33M6Ed9w1.kW-stIzgbt~yP_It",
             "OAUTH_TENANT_ID": "a6e2367a-92ea-4e5a-b565-723830bcc095",
@@ -95,14 +96,12 @@ class Eos:
                         "spec": {
                             "restartPolicy": "Never",
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [wait_for_pod("postgres"), wait_for_pod("redis")],
                             "containers": [
                                 {
                                     "name": self.name,
                                     "image": self.image,
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
-                                    "command": ["linkerd-await", "--shutdown", "--"],
                                     "args": ["python", "manage.py", "migrate"],
                                     "securityContext": {
                                         "runAsGroup": 10000,
@@ -138,7 +137,6 @@ class Eos:
                         },
                         "spec": {
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [
                                 wait_for_pod("postgres"),
                                 wait_for_pod("redis"),
@@ -148,7 +146,6 @@ class Eos:
                                 {
                                     "name": self.name,
                                     "image": self.image,
-                                    "command": ["linkerd-await", "--"],
                                     "args": ["python", "manage.py", "worker"],
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                     "ports": [{"containerPort": 9000}],

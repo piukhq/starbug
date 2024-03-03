@@ -12,6 +12,8 @@ class Settings(BaseSettings):
 
     storage_account_dsn: str
     storage_account_container: str = "results"
+    results_base_url: HttpUrl = "https://starbug.ait.uksouth.bink.sh/results"
+    maximum_test_duration_in_minutes: int = 120
 
 
 settings = Settings()
@@ -23,6 +25,7 @@ class OIDCSettings(BaseSettings):
     issuer_url: HttpUrl = "https://uksouth.oic.prod-aks.azure.com/a6e2367a-92ea-4e5a-b565-723830bcc095/e9bbbd31-b8e8-4f40-86a9-663186b7fa45/"
     resource_group_name: str = "uksouth-ait"
     subscription_id: UUID = "0b92124d-e5fe-4c9a-a898-1fdf02502e01"
+    ignored_prefixes: ClassVar[list[str]] = ["uksouth"]
     identities: ClassVar[list[str]] = [
         "angelia",
         "boreas",

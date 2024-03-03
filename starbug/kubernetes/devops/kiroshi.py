@@ -1,4 +1,5 @@
 """Define a Kiroshi Instance."""
+
 from kr8s.objects import Deployment, Job, RoleBinding, Service, ServiceAccount
 
 from starbug.kubernetes import get_secret_value, wait_for_migration, wait_for_pod
@@ -70,13 +71,11 @@ class Kiroshi:
                         },
                         "spec": {
                             "restartPolicy": "Never",
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "serviceAccountName": self.name,
                             "initContainers": [wait_for_pod("postgres")],
                             "containers": [
                                 {
                                     "name": self.name,
-                                    "command": ["linkerd-await", "--shutdown", "--"],
                                     "args": ["alembic", "upgrade", "head"],
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                     "image": self.image,
@@ -123,7 +122,6 @@ class Kiroshi:
                             },
                         },
                         "spec": {
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "serviceAccountName": self.name,
                             "initContainers": [wait_for_migration(self.name)],
                             "containers": [

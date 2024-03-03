@@ -15,6 +15,7 @@ class Angelia:
         self.image = image or "binkcore.azurecr.io/angelia:prod"
         self.labels = {"app": "angelia"}
         self.env = {
+            "LINKERD_AWAIT_DISABLED": "true",
             "CUSTOM_DOMAIN": "https://api.gb.bink.com/content/hermes",
             "PENDING_VOUCHERS_FLAG": "True",
             "POSTGRES_DSN": "postgresql://postgres@postgres:5432/hermes",
@@ -97,7 +98,6 @@ class Angelia:
                         },
                         "spec": {
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [
                                 wait_for_pod("postgres"),
                                 wait_for_pod("rabbitmq"),

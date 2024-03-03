@@ -3,74 +3,79 @@ kind: CustomResourceDefinition
 metadata:
   name: tests.bink.com
 spec:
-  scope: Namespaced
+  group: bink.com
   names:
     kind: StarbugTest
     plural: tests
-    singular: test
     shortNames:
-    - test
-  group: bink.com
+      - test
+    singular: test
+  scope: Namespaced
   versions:
-    - name: v1
-      served: true
-      storage: true
-      additionalPrinterColumns:
-        - name: Status
+    - additionalPrinterColumns:
+        - description: The status of the test
+          jsonPath: .status.phase
+          name: Status
           type: string
-          description: The status of the test
-          jsonPath: .status.status
-        - name: Results
-          type: string
-          description: The results of the test
+        - description: The results of the test
           jsonPath: .status.results
-        - name: Age
-          type: date
-          description: The age of the test
+          name: Results
+          type: string
+        - description: The age of the test
           jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+      name: v1beta1
       schema:
         openAPIV3Schema:
-          type: object
           properties:
-            status:
-              type: object
-              default: {}
-              properties:
-                status:
-                  type: string
-                  enum:
-                    - Pending
-                    - Running
-                    - Completed
-                    - Failed
-                  default: Pending
-                results:
-                  type: string
             spec:
-              type: object
               properties:
-                infrastructure:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      image:
-                        type: string
                 applications:
-                  type: array
                   items:
-                    type: object
                     properties:
-                      name:
-                        type: string
                       image:
                         type: string
+                      name:
+                        type: string
+                    type: object
+                  type: array
+                infrastructure:
+                  items:
+                    properties:
+                      image:
+                        type: string
+                      name:
+                        type: string
+                    type: object
+                  type: array
                 test:
-                  type: object
                   properties:
-                    name:
-                      type: string
                     image:
                       type: string
+                    name:
+                      type: string
+                  type: object
+              type: object
+            status:
+              default: {}
+              properties:
+                finished:
+                  default: false
+                  type: boolean
+                phase:
+                  default: Pending
+                  enum:
+                    - Cancelled
+                    - Completed
+                    - Failed
+                    - Pending
+                    - Running
+                  type: string
+                results:
+                  default: ""
+                  type: string
+              type: object
+          type: object
+      served: true
+      storage: true

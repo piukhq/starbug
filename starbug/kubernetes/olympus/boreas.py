@@ -15,6 +15,7 @@ class Boreas:
         self.image = image or "binkcore.azurecr.io/boreas:prod"
         self.labels = {"app": "boreas"}
         self.env = {
+            "LINKERD_AWAIT_DISABLED": "true",
             "DEBUG": "False",
             "RABBITMQ_DSN": "amqp://guest:guest@rabbitmq:5672/",
             "KEYVAULT_URL": get_secret_value("azure-keyvault", "url"),
@@ -92,7 +93,6 @@ class Boreas:
                         },
                         "spec": {
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "initContainers": [wait_for_pod("rabbitmq")],
                             "containers": [
                                 {
@@ -114,4 +114,4 @@ class Boreas:
 
     def deploy(self) -> tuple[ServiceAccount, RoleBinding, Service, Deployment]:
         """Return all deployable objects as a tuple."""
-        return self.serviceaccount, self.rolebinding, self.service, self.deployment
+        return (self.serviceaccount, self.rolebinding, self.service, self.deployment)

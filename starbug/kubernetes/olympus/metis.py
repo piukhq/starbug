@@ -15,6 +15,7 @@ class Metis:
         self.image = image or "binkcore.azurecr.io/metis:prod"
         self.labels = {"app": "metis"}
         self.env = {
+            "LINKERD_AWAIT_DISABLED": "true",
             "DEBUG": "True",
             "HERMES_URL": "http://hermes",
             "METIS_PRE_PRODUCTION": "False",
@@ -99,7 +100,6 @@ class Metis:
                         },
                         "spec": {
                             "serviceAccountName": self.name,
-                            "imagePullSecrets": [{"name": "binkcore.azurecr.io"}],
                             "containers": [
                                 {
                                     "name": self.name,
@@ -115,7 +115,6 @@ class Metis:
                                     "name": "celery",
                                     "image": self.image,
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
-                                    "command": ["linkerd-await", "--"],
                                     "args": [
                                         "celery",
                                         "-A",
