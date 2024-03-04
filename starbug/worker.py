@@ -38,60 +38,60 @@ class Worker:
         namespace_name = test.metadata.name
         AzureOIDC(namespace=namespace_name).setup_federated_credentials()
         modules.append(
-            Namespace(
-                {
-                    "apiVersion": "v1",
-                    "kind": "Namespace",
-                    "metadata": {
-                        "annotations": {
-                            "scheduler.alpha.kubernetes.io/defaultTolerations": [
-                                {
-                                    "key": "bink.com/workload",
-                                    "operator": "Equal",
-                                    "value": "txm",
-                                    "effect": "NoSchedule",
-                                },
-                                {
-                                    "key": "kubernetes.azure.com/scalesetpriority",
-                                    "operator": "Equal",
-                                    "value": "spot",
-                                    "effect": "NoSchedule",
-                                },
-                            ],
-                            "scheduler.alpha.kubernetes.io/node-selector": "kubernetes.azure.com/scalesetpriority=spot",
+            tuple(
+                Namespace(
+                    {
+                        "apiVersion": "v1",
+                        "kind": "Namespace",
+                        "metadata": {
+                            "annotations": {
+                                "scheduler.alpha.kubernetes.io/defaultTolerations": [
+                                    {
+                                        "key": "bink.com/workload",
+                                        "operator": "Equal",
+                                        "value": "txm",
+                                        "effect": "NoSchedule",
+                                    },
+                                    {
+                                        "key": "kubernetes.azure.com/scalesetpriority",
+                                        "operator": "Equal",
+                                        "value": "spot",
+                                        "effect": "NoSchedule",
+                                    },
+                                ],
+                                "scheduler.alpha.kubernetes.io/node-selector": "kubernetes.azure.com/scalesetpriority=spot",
+                            },
+                            "name": namespace_name,
                         },
-                        "name": namespace_name,
                     },
-                },
-            ),
-        )
-        modules.append(
-            Role(
-                {
-                    "apiVersion": "rbac.authorization.k8s.io/v1",
-                    "kind": "Role",
-                    "metadata": {
-                        "name": "k8s-wait-for",
-                        "namespace": namespace_name,
+                ),
+                Role(
+                    {
+                        "apiVersion": "rbac.authorization.k8s.io/v1",
+                        "kind": "Role",
+                        "metadata": {
+                            "name": "k8s-wait-for",
+                            "namespace": namespace_name,
+                        },
+                        "rules": [
+                            {
+                                "apiGroups": [""],
+                                "resources": ["pods", "services"],
+                                "verbs": ["get", "list", "watch"],
+                            },
+                            {
+                                "apiGroups": ["apps"],
+                                "resources": ["deployments"],
+                                "verbs": ["get", "list", "watch"],
+                            },
+                            {
+                                "apiGroups": ["batch"],
+                                "resources": ["jobs"],
+                                "verbs": ["get", "list", "watch"],
+                            },
+                        ],
                     },
-                    "rules": [
-                        {
-                            "apiGroups": [""],
-                            "resources": ["pods", "services"],
-                            "verbs": ["get", "list", "watch"],
-                        },
-                        {
-                            "apiGroups": ["apps"],
-                            "resources": ["deployments"],
-                            "verbs": ["get", "list", "watch"],
-                        },
-                        {
-                            "apiGroups": ["batch"],
-                            "resources": ["jobs"],
-                            "verbs": ["get", "list", "watch"],
-                        },
-                    ],
-                },
+                ),
             ),
         )
         try:
