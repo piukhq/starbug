@@ -68,7 +68,7 @@ class Worker:
         namespace_name = test.metadata.name
         Namespace(namespace_name).delete()
         AzureOIDC(namespace_name).remove_federated_credentials()
-        test.patch({"status": {"finished": True}})
+        test.patch({"status": {"complete": True}})
 
     def check_running_test(self, test: StarbugTest) -> None:
         """Ensure no test is allowed to run for more than two hours."""
