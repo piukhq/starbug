@@ -2,50 +2,54 @@
 
 from kr8s.objects import ConfigMap, Deployment, Service, ServiceAccount
 
+from starbug.kubernetes import get_secret_value
+
 
 class Postgres:
     """Define a Postgres Instance."""
 
     def __init__(self, namespace: str | None = None, image: str | None = None) -> None:
-        """.Initialize the Postgres class."""
+        """Initialize the Postgres class."""
         self.namespace = namespace or "default"
         self.image = image or "docker.io/postgres:15"
         self.name = "postgres"
         self.labels = {"app": "postgres"}
         self.databases = [
+            "api_reflector",
+            "atlas",
+            "bullsquid",
+            "eos",
             "europa",
             "hades",
-            "vela",
             "harmonia",
             "hermes",
-            "hubble",
-            "api_reflector",
-            "zagreus",
-            "atlas",
-            "midas",
-            "carina",
-            "copybot",
-            "cosmos",
-            "momus",
-            "eos",
-            "polaris",
-            "bullsquid",
-            "pontus",
-            "snowstorm",
-            "thanatos",
-            "prefect",
             "kiroshi",
+            "midas",
+            "snowstorm",
         ]
+
+        self.pg_host = get_secret_value("azure-postgres", "server_host")
+        self.pg_user = get_secret_value("azure-postgres", "server_user")
+        self.pg_pass = get_secret_value("azure-postgres", "server_pass")
+
         self.configmap = ConfigMap(
             {
                 "apiVersion": "v1",
                 "kind": "ConfigMap",
                 "metadata": {
-                    "name": self.name + "-init-script",
+                    "name": self.name + "-scripts",
                     "namespace": self.namespace,
                 },
                 "data": {
-                    "create-multiple-postgresql-databases.sh": '#!/bin/bash\n\nset -e\nset -u\n\nfunction create_user_and_database() {\n\tlocal database=$1\n\techo "  Creating user and database \'$database\'"\n\tpsql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" \u003c\u003c-EOSQL\n\t    CREATE USER $database;\n\t    CREATE DATABASE $database;\n\t    GRANT ALL PRIVILEGES ON DATABASE $database TO $database;\nEOSQL\n}\n\nif [ -n "$POSTGRES_MULTIPLE_DATABASES" ]; then\n\techo "Multiple database creation requested: $POSTGRES_MULTIPLE_DATABASES"\n\tfor db in $(echo $POSTGRES_MULTIPLE_DATABASES | tr \',\' \' \'); do\n\t\tcreate_user_and_database $db\n\tdone\n\techo "Multiple databases created"\nfi\n',  # noqa: E501
+                    "pgloader.sh": f"""#!/bin/bash
+                        for database in {" ".join(self.databases)}; do
+                        PGPASSWORD="{self.pg_pass}" pg_dump \\
+                            --clean --create --no-privileges --no-owner \\
+                            --host "{self.pg_host}" \\
+                            --username "{self.pg_user}" \\
+                            --dbname $database | psql -h localhost -U postgres
+                        done
+                         """,
                 },
             },
         )
@@ -101,7 +105,7 @@ class Postgres:
                                 {
                                     "name": "init-script",
                                     "configMap": {
-                                        "name": self.name + "-init-script",
+                                        "name": self.name + "-scripts",
                                     },
                                 },
                             ],
@@ -135,6 +139,7 @@ class Postgres:
                                         {
                                             "name": "init-script",
                                             "mountPath": "/docker-entrypoint-initdb.d",
+                                            "subPath": "pgloader.sh",
                                         },
                                     ],
                                 },
