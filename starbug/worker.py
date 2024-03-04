@@ -38,7 +38,7 @@ class Worker:
         namespace_name = test.metadata.name
         AzureOIDC(namespace=namespace_name).setup_federated_credentials()
         modules.append(
-            tuple(
+            (
                 Namespace(
                     {
                         "apiVersion": "v1",
