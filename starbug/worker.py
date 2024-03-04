@@ -4,11 +4,13 @@ from time import sleep
 
 import kr8s
 import pendulum
-from kr8s.objects import Namespace, Role
+from kr8s.objects import Namespace
 from loguru import logger
 
 from starbug.azure import AzureOIDC
 from starbug.kubernetes.custom.resources import StarbugTest
+from starbug.kubernetes.infrastructure.namespace import AITNamespace
+from starbug.kubernetes.infrastructure.roles import AITRoles
 from starbug.mapping import application_mapping, infrastructure_mapping, test_mapping
 from starbug.settings import settings
 
@@ -37,63 +39,8 @@ class Worker:
         modules = []
         namespace_name = test.metadata.name
         AzureOIDC(namespace=namespace_name).setup_federated_credentials()
-        modules.append(
-            (
-                Namespace(
-                    {
-                        "apiVersion": "v1",
-                        "kind": "Namespace",
-                        "metadata": {
-                            "annotations": {
-                                "scheduler.alpha.kubernetes.io/defaultTolerations": [
-                                    {
-                                        "key": "bink.com/workload",
-                                        "operator": "Equal",
-                                        "value": "txm",
-                                        "effect": "NoSchedule",
-                                    },
-                                    {
-                                        "key": "kubernetes.azure.com/scalesetpriority",
-                                        "operator": "Equal",
-                                        "value": "spot",
-                                        "effect": "NoSchedule",
-                                    },
-                                ],
-                                "scheduler.alpha.kubernetes.io/node-selector": "kubernetes.azure.com/scalesetpriority=spot",
-                            },
-                            "name": namespace_name,
-                        },
-                    },
-                ),
-                Role(
-                    {
-                        "apiVersion": "rbac.authorization.k8s.io/v1",
-                        "kind": "Role",
-                        "metadata": {
-                            "name": "k8s-wait-for",
-                            "namespace": namespace_name,
-                        },
-                        "rules": [
-                            {
-                                "apiGroups": [""],
-                                "resources": ["pods", "services"],
-                                "verbs": ["get", "list", "watch"],
-                            },
-                            {
-                                "apiGroups": ["apps"],
-                                "resources": ["deployments"],
-                                "verbs": ["get", "list", "watch"],
-                            },
-                            {
-                                "apiGroups": ["batch"],
-                                "resources": ["jobs"],
-                                "verbs": ["get", "list", "watch"],
-                            },
-                        ],
-                    },
-                ),
-            ),
-        )
+        modules.append(AITNamespace(namespace_name).deploy())
+        modules.append(AITRoles(namespace_name).deploy())
         try:
             for infrastructure in test.spec.infrastructure:
                 name, image = infrastructure.get("name"), infrastructure.get("image")
