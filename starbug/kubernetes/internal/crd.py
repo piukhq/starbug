@@ -18,7 +18,7 @@ starbug_crd = CustomResourceDefinition(
             "group": "bink.com",
             "versions": [
                 {
-                    "name": "v1beta1",
+                    "name": "v1",
                     "served": True,
                     "storage": True,
                     "additionalPrinterColumns": [
