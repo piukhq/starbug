@@ -47,7 +47,7 @@ class Postgres:
                             --clean --create --no-privileges --no-owner \\
                             --host "{self.pg_host}" \\
                             --username "{self.pg_user}" \\
-                            --dbname $database | psql -h localhost -U postgres
+                            --dbname $database | psql -U postgres
                         done
                          """,
                 },
@@ -121,7 +121,7 @@ class Postgres:
                                                 "-U",
                                                 "postgres",
                                             ],
-                                            "initialDelaySeconds": 5,
+                                            "initialDelaySeconds": 20,
                                             "periodSeconds": 10,
                                         },
                                     },
@@ -139,7 +139,6 @@ class Postgres:
                                         {
                                             "name": "init-script",
                                             "mountPath": "/docker-entrypoint-initdb.d",
-                                            "subPath": "pgloader.sh",
                                         },
                                     ],
                                 },
