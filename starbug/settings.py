@@ -22,7 +22,7 @@ settings = Settings()
 class OIDCSettings(BaseSettings):
     """Settings for OIDC Components."""
 
-    issuer_url: HttpUrl = "https://uksouth.oic.prod-aks.azure.com/a6e2367a-92ea-4e5a-b565-723830bcc095/e9bbbd31-b8e8-4f40-86a9-663186b7fa45/"
+    issuer_url: HttpUrl = "https://uksouth.oic.prod-aks.azure.com/a6e2367a-92ea-4e5a-b565-723830bcc095/1e1dcf91-9506-4009-b402-45b0319f1b1a/"
     resource_group_name: str = "uksouth-ait"
     subscription_id: UUID = "0b92124d-e5fe-4c9a-a898-1fdf02502e01"
     ignored_prefixes: ClassVar[list[str]] = ["uksouth"]
