@@ -44,7 +44,7 @@ class Postgres:
                     "pgloader.sh": f"""#!/bin/bash
                         for database in {" ".join(self.databases)}; do
                         PGPASSWORD="{self.pg_pass}" pg_dump \\
-                            --clean --create --no-privileges --no-owner \\
+                            --create --no-privileges --no-owner \\
                             --host "{self.pg_host}" \\
                             --username "{self.pg_user}" \\
                             --dbname $database | psql -U postgres
