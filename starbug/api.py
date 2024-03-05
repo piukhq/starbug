@@ -33,6 +33,7 @@ class TestSpec(BaseModel):
     """Spec for a Test."""
 
     name: str
+    image: str | None = None
 
 
 class JobSpec(BaseModel):
