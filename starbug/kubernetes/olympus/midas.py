@@ -108,11 +108,7 @@ class Midas:
                                 {
                                     "name": self.name,
                                     "image": self.image,
-                                    "args": [
-                                        "sh",
-                                        "-c",
-                                        "until alembic upgrade head; do echo 'Retrying'; sleep 2; done;",
-                                    ],
+                                    "args": ["alembic", "-c", "/app/alembic.ini", "upgrade", "head"],
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                     "securityContext": {
                                         "runAsGroup": 10000,
