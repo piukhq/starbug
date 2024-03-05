@@ -17,13 +17,13 @@ class Metis:
         self.env = {
             "LINKERD_AWAIT_DISABLED": "true",
             "DEBUG": "True",
-            "HERMES_URL": "http://hermes",
+            "HERMES_URL": "http://hermes-api",
             "METIS_PRE_PRODUCTION": "False",
             "METIS_TESTING": "False",
             "SENTRY_DSN": "https://9aeb0741cef34c4ebce7e560c56cac2c@o503751.ingest.sentry.io/5610024",
             "SENTRY_ENV": "ait",
-            "SPREEDLY_BASE_URL": "http://pelops/spreedly",
-            "STUBBED_VOP_URL": "http://pelops",
+            "SPREEDLY_BASE_URL": "http://pelops-api/spreedly",
+            "STUBBED_VOP_URL": "http://pelops-api",
             "AZURE_VAULT_URL": get_secret_value("azure-keyvault", "url"),
             "AMQP_URL": "amqp://rabbitmq:5672/",
         }
