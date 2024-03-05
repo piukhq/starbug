@@ -1,9 +1,11 @@
 """Runs tests depending on state changes to the Starbug CRD."""
 
+import contextlib
 from time import sleep
 
 import kr8s
 import pendulum
+from kr8s._exceptions import NotFoundError
 from kr8s.objects import Namespace
 from loguru import logger
 
@@ -66,7 +68,8 @@ class Worker:
     def destroy_test(self, test: StarbugTest) -> None:
         """Destroy Starbug Tests."""
         namespace_name = test.metadata.name
-        Namespace(namespace_name).delete()
+        with contextlib.suppress(NotFoundError):
+            Namespace(namespace_name).delete()
         AzureOIDC(namespace_name).remove_federated_credentials()
         test.patch({"status": {"complete": True}})
 
