@@ -16,7 +16,7 @@ class Hades:
         self.labels = {"app": "hades"}
         self.env = {
             "LINKERD_AWAIT_DISABLED": "true",
-            "HERMES_URL": "http://hermes",
+            "HERMES_URL": "http://hermes-api",
             "SENTRY_DSN": "https://4904faba430f4d92b6dbaac432de0c7e@o503751.ingest.sentry.io/5610000",
             "SENTRY_ENV": "ait",
             "HADES_DATABASE_URL": "postgresql://postgres@postgres:5432/hades",
@@ -58,7 +58,7 @@ class Hades:
                 "apiVersion": "v1",
                 "kind": "Service",
                 "metadata": {
-                    "name": self.name,
+                    "name": self.name + "-api",
                     "namespace": self.namespace,
                     "labels": self.labels,
                 },

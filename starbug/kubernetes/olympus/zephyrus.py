@@ -16,7 +16,7 @@ class Zephyrus:
         self.labels = {"app": "zephyrus"}
         self.env = {
             "LINKERD_AWAIT_DISABLED": "true",
-            "HERMES_URL": "http://hermes",
+            "HERMES_URL": "http://hermes-api",
             "SENTRY_DSN": "https://286fc47f67974edc9761b7ae7fc502c2@o503751.ingest.sentry.io/5610043",
             "SENTRY_ENV": "ait",
             "VISA_PASSWORD": "7Taq_e-VY9KU",
@@ -64,7 +64,7 @@ class Zephyrus:
                 "apiVersion": "v1",
                 "kind": "Service",
                 "metadata": {
-                    "name": self.name,
+                    "name": self.name + "-api",
                     "namespace": self.namespace,
                     "labels": self.labels,
                 },

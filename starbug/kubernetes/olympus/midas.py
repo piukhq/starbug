@@ -16,12 +16,12 @@ class Midas:
         self.labels = {"app": "midas"}
         self.env = {
             "LINKERD_AWAIT_DISABLED": "true",
-            "ATLAS_URL": "http://atlas",
+            "ATLAS_URL": "http://atlas-api",
             "AZURE_AAD_TENANT_ID": "a6e2367a-92ea-4e5a-b565-723830bcc095",
-            "CONFIG_SERVICE_URL": "http://europa/config-service",
+            "CONFIG_SERVICE_URL": "http://europa-api/config-service",
             "DEBUG": "False",
-            "HADES_URL": "http://hades",
-            "HERMES_URL": "http://hermes",
+            "HADES_URL": "http://hades-api",
+            "HERMES_URL": "http://hermes-api",
             "ITSU_VOUCHER_OFFER_ID": "23",
             "NEW_ICELAND_AGENT_ACTIVE": "True",
             "SENTRY_DSN": "https://846029dbfccb4f55ada16a7574dcc20b@o503751.ingest.sentry.io/5610025",
@@ -71,7 +71,7 @@ class Midas:
                 "apiVersion": "v1",
                 "kind": "Service",
                 "metadata": {
-                    "name": self.name,
+                    "name": self.name + "-api",
                     "namespace": self.namespace,
                     "labels": self.labels,
                 },

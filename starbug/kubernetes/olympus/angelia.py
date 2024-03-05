@@ -65,7 +65,7 @@ class Angelia:
                 "apiVersion": "v1",
                 "kind": "Service",
                 "metadata": {
-                    "name": self.name,
+                    "name": self.name + "-api",
                     "namespace": self.namespace,
                     "labels": self.labels,
                 },
