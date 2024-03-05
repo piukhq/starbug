@@ -13,7 +13,7 @@ class Pytest:
         """Initialize the Pytest Class."""
         self.name = "pytest"
         self.namespace = namespace
-        self.image = image or "binkcore.azurecr.io/pyqa-apiv2:latest"
+        self.image = image or "binkcore.azurecr.io/pyqa-apiv2:v1.1.7"
         self.env = {
             "BLOB_STORAGE_ACCOUNT_DSN": get_secret_value("azure-storage", "blob_connection_string_primary"),
             "HERMES_DATABASE_URI": "postgresql://postgres@postgres:5432/hermes",
