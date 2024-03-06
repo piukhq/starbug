@@ -73,9 +73,7 @@ class Pytest:
                     "template": {
                         "metadata": {
                             "name": self.name,
-                            "labels": {
-                                "app": self.name,
-                            },
+                            "labels": {"app": self.name, "azure.workload.identity/use": "true"},
                             "annotations": {
                                 "kubectl.kubernetes.io/default-container": self.name,
                             },
