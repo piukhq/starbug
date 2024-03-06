@@ -90,7 +90,7 @@ class Pytest:
                                         "pytest",
                                         "--html=/mnt/results/report.html",
                                         "--self-contained-html",
-                                        "-m=enrol_new_paymentcard",
+                                        "-m=pyqa-ait",
                                     ],
                                     "volumeMounts": [{"name": "results", "mountPath": "/mnt/results"}],
                                     "securityContext": {
