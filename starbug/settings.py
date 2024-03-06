@@ -38,6 +38,7 @@ class OIDCSettings(BaseSettings):
         "kiroshi",
         "metis",
         "midas",
+        "pytest",
         "snowstorm",
         "zephyrus",
     ]
