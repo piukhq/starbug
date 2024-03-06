@@ -92,7 +92,7 @@ class Pytest:
                                         "pytest",
                                         "--html=/mnt/results/report.html",
                                         "--self-contained-html",
-                                        "-m=bink_regression_api2",
+                                        "-m=enrol_new_paymentcard",
                                     ],
                                     "volumeMounts": [{"name": "results", "mountPath": "/mnt/results"}],
                                     "securityContext": {
