@@ -75,7 +75,7 @@ class Pytest:
                             "name": self.name,
                             "labels": {"app": self.name, "azure.workload.identity/use": "true"},
                             "annotations": {
-                                "kubectl.kubernetes.io/default-container": self.name,
+                                "kubectl.kubernetes.io/default-container": "test",
                             },
                         },
                         "spec": {
@@ -83,7 +83,7 @@ class Pytest:
                             "initContainers": [wait_for_pod("angelia")],
                             "containers": [
                                 {
-                                    "name": self.name,
+                                    "name": "test",
                                     "image": self.image,
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                     "args": [
