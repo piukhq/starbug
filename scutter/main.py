@@ -51,7 +51,7 @@ class Scutter:
                     timeout=10,
                 ).json(),
             )
-            test_container = next([container for container in pod.status.containerStatuses if container.name == "test"])
+            test_container = [container for container in pod.status.containerStatuses if container.name == "test"][0]  # noqa: RUF015
             try:
                 if test_container.state.get("terminated"):
                     exit_code = test_container.state.terminated.exitCode
