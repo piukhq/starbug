@@ -108,7 +108,7 @@ class Midas:
                                 {
                                     "name": self.name,
                                     "image": self.image,
-                                    "args": ["alembic", "-c", "/app/alembic.ini", "upgrade", "head"],
+                                    "args": ["alembic", "upgrade", "head"],
                                     "env": [{"name": k, "value": v} for k, v in self.env.items()],
                                     "securityContext": {
                                         "runAsGroup": 10000,
