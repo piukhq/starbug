@@ -12,14 +12,3 @@ jobs:
       application_name: ${{ github.event.repository.name }}
       application_version: ${{ github.ref_name }}
     secrets: inherit
-  release:
-    needs: ["build"]
-    uses: binkhq/actions/.github/workflows/python_release.yaml@v1
-    with:
-      source: ${{ github.event.repository.name }}:${{ github.ref_name }}
-      tags: ${{ matrix.environment }}-${{ github.ref_name }},${{ matrix.environment }}
-      environment:  ${{ matrix.environment }}
-    secrets: inherit
-    strategy:
-      matrix:
-        environment: [staging, production]

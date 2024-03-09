@@ -53,7 +53,7 @@ class Scutter:
             )
             test_container = [container for container in pod.status.containerStatuses if container.name == "test"][0]  # noqa: RUF015
             try:
-                if test_container.state.get("terminated"):
+                if "terminated" in test_container.state:
                     exit_code = test_container.state.terminated.exitCode
                     blob_name = f"{self.namespace}/{settings.file_path.name}"
                     data = settings.file_path.read_bytes()

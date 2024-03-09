@@ -11,7 +11,7 @@ def wait_for_migration(name: str) -> dict:
         "name": "wait-for-migration",
         "image": "ghcr.io/groundnuty/k8s-wait-for:v2.0",
         "imagePullPolicy": "Always",
-        "args": ["job", f"{name}-migrator"],
+        "args": ["job-wr", f"{name}-migrator"],
     }
 
 
