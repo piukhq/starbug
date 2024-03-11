@@ -6,7 +6,9 @@ from starbug.kubernetes.infrastructure.rabbitmq import RabbitMQ
 from starbug.kubernetes.infrastructure.redis import Redis
 from starbug.kubernetes.olympus.angelia import Angelia
 from starbug.kubernetes.olympus.asteria import Asteria
+from starbug.kubernetes.olympus.atlas import Atlas
 from starbug.kubernetes.olympus.boreas import Boreas
+from starbug.kubernetes.olympus.callbacca import Callbacca
 from starbug.kubernetes.olympus.eos import Eos
 from starbug.kubernetes.olympus.europa import Europa
 from starbug.kubernetes.olympus.hades import Hades
@@ -29,8 +31,10 @@ infrastructure_mapping = {
 
 application_mapping = {
     "angelia": Angelia,
+    "atlas": Atlas,
     "asteria": Asteria,
     "boreas": Boreas,
+    "callbacca": Callbacca,
     "eos": Eos,
     "europa": Europa,
     "hades": Hades,
