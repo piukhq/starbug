@@ -93,4 +93,4 @@ class Callbacca:
 
     def deploy(self) -> tuple[ServiceAccount, RoleBinding, Deployment]:
         """Return all deployable objects as a tuple."""
-        return (self.serviceaccount, self.rolebinding, self.service, self.job, self.deployment)
+        return (self.serviceaccount, self.rolebinding, self.deployment)
