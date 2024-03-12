@@ -43,14 +43,19 @@ class Scutter:
     def run(self) -> None:
         """Run the Scutter."""
         while True:
-            pod = Box(
-                requests.get(
-                    self.pod_url,
-                    headers={"Authorization": f"Bearer {self.token}"},
-                    verify="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
-                    timeout=10,
-                ).json(),
-            )
+            try:
+                pod = Box(
+                    requests.get(
+                        self.pod_url,
+                        headers={"Authorization": f"Bearer {self.token}"},
+                        verify="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
+                        timeout=10,
+                    ).json(),
+                )
+            except requests.exceptions.ConnectionError as error:
+                logger.error(f"Failed to connect to Kubernetes API: {error}")
+                sleep(10)
+                continue
             test_container = [container for container in pod.status.containerStatuses if container.name == "test"][0]  # noqa: RUF015
             try:
                 if "terminated" in test_container.state:
