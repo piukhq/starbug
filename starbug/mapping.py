@@ -1,5 +1,6 @@
 """Provides a simple mapping of classes to their names."""
 
+from starbug.kubernetes.data.snowstorm import Snowstorm
 from starbug.kubernetes.devops.kiroshi import Kiroshi
 from starbug.kubernetes.infrastructure.postgres import Postgres
 from starbug.kubernetes.infrastructure.rabbitmq import RabbitMQ
@@ -45,6 +46,7 @@ application_mapping = {
     "midas": Midas,
     "pelops": Pelops,
     "plutus": Plutus,
+    "snowstorm": Snowstorm,
     "skiron": Skiron,
     "zephyrus": Zephyrus,
 }
