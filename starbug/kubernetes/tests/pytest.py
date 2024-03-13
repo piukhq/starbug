@@ -90,7 +90,7 @@ class Pytest:
                                         "pytest",
                                         "--html=/mnt/results/report.html",
                                         "--self-contained-html",
-                                        "-m=bink_regression_api2",
+                                        "-m=sit",
                                     ],
                                     "volumeMounts": [{"name": "results", "mountPath": "/mnt/results"}],
                                     "securityContext": {
