@@ -525,13 +525,13 @@ six = "*"
 
 [[package]]
 name = "kr8s"
-version = "0.14.1"
+version = "0.14.6"
 description = "A Kubernetes API library"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "kr8s-0.14.1-py3-none-any.whl", hash = "sha256:7f0a5de1be5f957aba199830e1b9060911a26eccc23e56adf8107ec03a4c1419"},
-    {file = "kr8s-0.14.1.tar.gz", hash = "sha256:110044848b6f22cb4cf35213df36846a81a471406ea402843c4d640b36962afb"},
+    {file = "kr8s-0.14.6-py3-none-any.whl", hash = "sha256:e9d3a82944bc27d629c792c213d5398d673f3605740a2e0cd7f82dfda1f09071"},
+    {file = "kr8s-0.14.6.tar.gz", hash = "sha256:f8b19235c297531b735720897b823291d42960f19e9d17126798c20446eee238"},
 ]
 
 [package.dependencies]
@@ -539,7 +539,7 @@ anyio = ">=3.7.0"
 asyncache = ">=0.3.1"
 cryptography = ">=35"
 httpx = ">=0.24.1"
-httpx-ws = ">=0.5.1"
+httpx-ws = ">=0.5.2"
 python-box = ">=7.0.1"
 python-jsonpath = ">=0.7.1"
 pyyaml = ">=6.0"
